@@ -1,5 +1,7 @@
 # Chronos ICS
 
+This is a fork of https://github.com/TheToto/chronos-ics
+
 [![Build Status](https://travis-ci.org/epita/chronos-ics.svg?branch=master)](https://travis-ci.org/epita/chronos-ics)
 [![Requirements Status](https://requires.io/github/epita/chronos-ics/requirements.svg?branch=master)](https://requires.io/github/epita/chronos-ics/requirements/?branch=master)
 
