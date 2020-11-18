@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset='UTF-8'>
+    <title>Chronos - ACU</title>
+    <link rel='stylesheet prefetch' href='//maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css'>
+    <style>
+        body {
+          padding-top: 5%;
+          padding-bottom: 20px;
+          background-color: #E8E8E8;
+        }
+
+        .header {
+          margin-bottom: 20px;
+        }
+
+        @media (min-width: 768px) {
+          .container {
+            max-width: 730px;
+          }
+        }
+    </style>
+</head>
+
+<body>
+<div class='container'>
+  <div class='header clearfix'>
+    <h3>Chronos ICS files <small>Assistants</small></h3>
+  </div>
+
+  <div class='row well'>
+    {% for group in groups %}
+    <table class='table table-condensed table-striped'>
+      <thead>
+        <tr>
+          <th>{{ group.title }}</th>
+          <th width='45%'>Update</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for cal in group.cals %}
+        <tr>
+          <td>
+            <a href='calendars/{{ cal[0] }}.ics'>{{ cal[0] }}</a>
+          </td>
+          <td>{{ cal[1] }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% endfor %}
+  </div>
+</div>
+</body>
+</html>
