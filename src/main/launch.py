@@ -1,32 +1,50 @@
 import discord
 from discord.ext import commands
 
-prefix = "?"
 
-def help():
-    print("help")
+# Personnal commands
+from commands import default, help, set, \
+    next, week, author_name, prefix
+from utils import get_content
 
-def cmd2():
-    print("clmd2")
 
-cmds = {'': cmd2,'help': help}
+cmds = {'': default,
+        'help': help,
+        'set': set,
+        'next': next,
+        'week': week,
+        'prefix': prefix}
 
-def get_token(file):
-    file = open(file, "r")
-    return file.read()
 
 class Client(discord.Client):
     async def on_ready(self):
         print('Logged on as {0}!'.format(self.user))
+        print()
+        print('==============================================')
 
     async def on_message(self, message):
-        cmd = message.content.split(' ')
-        if not cmd[0].startswith("mom" + prefix):
+        line = message.content.split(' ', 1)
+        cmd = line[0]
+        args = line[1].split(' ') if len(line) > 1 else None
+
+        # TODO: Grab from DB prefix
+        prefix = "?"
+
+        if not cmd.startswith(f"mom{prefix}"):
             return
+
+        name = author_name(message.author)
+        print(f"{name} > {cmd} > {args}")
+
         try:
-            cmds[cmd[0][4:]]()
-        except:
-            print(f"La commande {cmd[0]} n'existe pas")
+            c = cmd[4:]
+            retcode = await cmds[c](self, message, args)
+        except Exception as error:
+            print(error)
+            return
+
+        # TODO: Check error code
+
 
 client = Client()
-client.run(get_token("token"))
+client.run(get_content("token"))
