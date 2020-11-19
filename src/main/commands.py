@@ -3,6 +3,15 @@ import time
 import datetime
 
 
+async def error_message():
+    embed = discord.Embed(title="Wrong arguments",
+                          colour=discord.Colour(0x42aff2),
+                          description="Please check ``help`` for more information",
+                          url="https://github.com/erwanvivien/momento#how-to-use-it")
+    await message.channel.send(embed=embed)
+    return 1
+
+
 def author_name(author):
     name = author.nick
     if not name:
@@ -11,31 +20,33 @@ def author_name(author):
 
 
 async def default(self, message, args):
-    print("", end='')
+    if args:
+        return await error_message():
+    return 0
 
 
 async def set(self, message, args):
     if not args or len(args) != 1:
-        await help(self, message, args)
-        return
+        return await error_message():
+    return 0
 
 
 async def next(self, message, args):
-    print("", end='')
+    if args:
+        return await error_message():
+    return 0
 
 
 async def week(self, message, args):
-    print("", end='')
+    if not args or len(args) >= 2 or not args[0].isdigit():
+        return error_message()
+    return 0
 
 
 async def prefix(self, message, args):
     if not args or len(args) != 1:
-        embed = discord.Embed(title="Wrong arguments",
-                              colour=discord.Colour(0x42aff2),
-                              description="Please check ``help`` for more information",
-                              url="https://github.com/erwanvivien/momento#how-to-use-it")
-        message = await message.channel.send(embed=embed)
-        return
+        return error_message()
+    return 0
 
 
 async def help(self, message, args):
