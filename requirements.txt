@@ -6,3 +6,5 @@ python-dateutil==2.5.3
 pytz==2016.4
 requests==2.10.0
 six==1.10.0
+discord.py>=1.5.1
+Pillow>=8.0.1
