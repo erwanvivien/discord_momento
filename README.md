@@ -1,7 +1,5 @@
 ![Momento logo](/docs/momento.png)
 
-Momento is a Discord bot retrieving ICS feed from Chronos API to make it accessible from Discord with simple commands. It allows students to check their schedule whenever they want with neat graphics.
-
 ## How does it work?
 The bot gathers ICS data (to understand iCalendar format files) from EPITA scheduling platform Chronos. Then by parsing these we can assemble pictures.
 
