@@ -9,6 +9,8 @@ from commands import default, help, set, \
 
 from utils import get_content
 
+BOT_IMAGE_URL = "https://raw.githubusercontent.com/erwanvivien/momento/master/docs/momento-icon.png"
+
 cmds = {'': default,
         'help': help,
         'set': set,
@@ -23,11 +25,16 @@ cmds = {'': default,
 
 class Client(discord.Client):
     async def on_ready(self):
-        print('Logged on as {0}!'.format(self.user))
-        print()
+        print('Logged on as {0}!\n'.format(self.user))
         print('==============================================')
-        await client.change_presence(status=discord.Status.idle,
-                                     activity=discord.Game("chronos"))
+        await client.change_presence(status=discord.Status.online,
+                                     activity=discord.Activity(name="chronos",
+                                                               type=discord.ActivityType.watching,
+                                                               details="google.fr",
+                                                               large_image_url=BOT_IMAGE_URL,
+                                                               small_image_url=BOT_IMAGE_URL,
+                                                               large_image_text=BOT_IMAGE_URL,
+                                                               small_image_text=BOT_IMAGE_URL))
 
     async def on_message(self, message):
         line = message.content.split(' ', 1)
