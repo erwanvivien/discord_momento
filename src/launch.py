@@ -25,6 +25,8 @@ class Client(discord.Client):
         print('Logged on as {0}!'.format(self.user))
         print()
         print('==============================================')
+        await client.change_presence(status=discord.Status.idle,
+                                     activity=discord.Game("chronos"))
 
     async def on_message(self, message):
         line = message.content.split(' ', 1)
