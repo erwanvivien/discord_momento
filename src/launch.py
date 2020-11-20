@@ -5,7 +5,7 @@ from discord.ext import commands
 # Personnal commands
 from commands import default, help, set, \
     next, week, author_name, prefix, \
-    report, missing, forceupdate
+    report, missing, forceupdate, test
 
 from utils import get_content
 
@@ -17,7 +17,8 @@ cmds = {'': default,
         'prefix': prefix,
         'report': report,
         'missing': missing,
-        'forceupdate': forceupdate}
+        'forceupdate': forceupdate,
+        'test': test}
 
 
 class Client(discord.Client):
@@ -47,6 +48,21 @@ class Client(discord.Client):
             retcode = await cmds[c](self, message, args)
         except Exception as error:
             return print(error)
+
+    async def on_reaction_add(self, reaction, user):
+        if user.id in [778983226110640159, 778983263871696897]:
+            return
+
+        print(f"{user} added a {reaction.emoji}")
+
+        # Both dev ids
+        if reaction.emoji in ['✅'] and user.id in [138282927502000128, 289145021922279425] \
+                and reaction.message.channel.id == 779292533595045919:
+            await reaction.message.delete()
+
+        # Both bot ids
+        if reaction.emoji in ['❌'] and reaction.message.author.id in [778983226110640159, 778983263871696897]:
+            await reaction.message.delete()
 
 
 client = Client()
