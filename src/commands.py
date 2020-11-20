@@ -8,6 +8,8 @@ import concurrent.futures
 
 from chronos import get_calendar, get_year
 
+import database
+
 
 OUTPUT = '.'
 CALDIR = os.path.join(OUTPUT, 'calendars')
@@ -55,8 +57,13 @@ async def week(self, message, args):
 
 
 async def prefix(self, message, args):
-    if not args or len(args) != 1:
+    if not args or len(args) != 1 or len(args[0]) > 1:
         return await error_message(message)
+
+    if not args[0][0] in ".?,;:/!$£¤%*@+#":
+        return await error_message(message)
+
+    sql = f''' UPDATE users SET prefix = {args[0][0]} WHERE id = {message.author.id}'''
 
 
 async def report(self, message, args):

@@ -3,26 +3,33 @@ from sqlite3 import Error
 
 DB_PATH = "database.db"
 
-create_connection(DB_PATH)
+
+def db_create():
+    sql_create_user = """CREATE TABLE IF NOT EXISTS users (
+                                            id integer PRIMARY KEY,
+                                            prefix text NOT NULL,
+                                            class text
+                                        ); """
+    db_exec(sql_create_user)
 
 
-def create_connection():
-    try:
-        conn = sqlite3.connect('database.db')
-        sql_create_user = """ CREATE TABLE IF NOT EXISTS user (
-                                                id integer PRIMARY KEY,
-                                                prefix text NOT NULL,
-                                                group text NOT NULL
-                                            ); """
-        # sql_create_guilds = """ CREATE TABLE IF NOT EXISTS guilds (
-        #                                         id integer PRIMARY KEY,
-        #                                         prefix text,
-        #                                         group text
-        #                                     ); """
-        create_table(conn, sql_create_user)
-        # create_table(conn, sql_create_guilds)
-    except:
-        return
+def db_adduser(userid):
+    sql = f'''INSERT INTO users (id,prefix, class) VALUES (?, ?, ?)'''
+    args = (userid, '?', None)
+
+    db_exec(sql, args)
+
+
+def db_exists(userid):
+    sql = f'''SELECT * FROM users ORDER BY id'''
+
+    db = db_exec(sql)
+
+    for row in db:
+        if userid == row[0]:
+            return row
+
+    return None
 
 
 def db_exec(sql, args=None):
@@ -30,8 +37,12 @@ def db_exec(sql, args=None):
     cur = conn.cursor()
 
     if args:
-        cur.execute(sql, args)
+        res = cur.execute(sql, args).fetchall()
     else:
-        cur.execute(sql)
+        res = cur.execute(sql).fetchall()
 
-    close_connection(conn)
+    conn.commit()
+    if conn:
+        conn.close()
+
+    return res

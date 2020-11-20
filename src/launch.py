@@ -8,6 +8,7 @@ from commands import default, help, set, \
     report, missing, test  # , update  , forceupdate
 
 from utils import get_content
+from database import *
 
 cmds = {'': default,
         'help': help,
@@ -23,6 +24,9 @@ cmds = {'': default,
 token = get_content("token")
 
 
+db_create()
+
+
 class Client(discord.Client):
     async def on_ready(self):
         print('Logged on as {0}!\n'.format(self.user))
@@ -32,12 +36,21 @@ class Client(discord.Client):
                                                                type=discord.ActivityType.watching))
 
     async def on_message(self, message):
+        if message.author.id in [778983226110640159, 778983263871696897]:
+            return
+
         line = message.content.split(' ', 1)
         cmd = line[0]
         args = line[1].split(' ') if len(line) > 1 else None
 
-        # TODO: Grab from DB prefix
-        prefix = "?"
+        user = db_exists(message.author.id)
+        if not user:
+            db_adduser(message.author.id)
+            prefix = "?"
+            print(f'Added {message.author.id}')
+        else:
+            print(user)
+            prefix = user[1]  # prefix
 
         if not cmd.startswith(f"mom{prefix}"):
             return
