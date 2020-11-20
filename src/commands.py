@@ -1,6 +1,15 @@
 import discord
 import time
 import datetime
+import logging
+
+import os
+import concurrent.futures
+
+
+OUTPUT = '.'
+CALDIR = os.path.join(OUTPUT, 'calendars')
+
 
 # School part !
 
@@ -87,7 +96,7 @@ CLASSES3 = ["BACTERIOLY", "BMP", "Bioinformatic", "Biomimetics", "Biostatistic",
             "Process Engineering", "Project Management", "Reactor calculation", "SBIP", "Synthetic Biology",
             "TD PREPARATION TP"]
 
-BIOTECH = APPRENTIS+BIOTECH1+BIOTECH+BIOTECH3 + \
+BIOTECH = APPRENTIS+BIOTECH1+BIOTECH2+BIOTECH3 + \
     BIOTECH4+BIOTECH5+EVENTS+CLASSES1+CLASSES2+CLASSES3
 
 ALL = ADM + ASSO + EPITA + EPITECH + ETNA + BIOTECH
@@ -111,22 +120,6 @@ def author_name(author):
 async def default(self, message, args):
     if args:
         return await error_message(message)
-
-
-async def forceupdate(selft, message, args):
-    logging.warning("Started @ {}".format(time.strftime("%c")))
-    for d in [OUTPUT, CALDIR]:
-        if not os.path.isdir(d):
-            os.mkdir(d)
-
-    with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
-        for i in MAJORS:
-            executor.submit(get_calendar, ASSISTANT_PROM, i)
-        for i in GROUPS:
-            executor.submit(get_calendar, STUDENT_PROM, i)
-
-    update_index()
-    logging.warning("Finished @ {}".format(time.strftime("%c")))
 
 
 async def set(self, message, args):
@@ -163,9 +156,24 @@ async def forceupdate(self, message, args):
     # Only bot owner can do this command
     # 138282927502000128 => Lycoon#7542
     # 289145021922279425 => Xiaojiba#1407
-    if not args or len(args) != 1 or not message.author.id in [289145021922279425, 138282927502000128]:
+
+    if not (message.author.id in [289145021922279425, 138282927502000128]):
         return await error_message(message)
+
     print("You're admin")
+    logging.warning("Started @ {}".format(time.strftime("%c")))
+    for d in [OUTPUT, CALDIR]:
+        if not os.path.isdir(d):
+            os.mkdir(d)
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
+        for i in MAJORS:
+            executor.submit(get_calendar, ASSISTANT_PROM, i)
+        for i in GROUPS:
+            executor.submit(get_calendar, STUDENT_PROM, i)
+
+    update_index()
+    logging.warning("Finished @ {}".format(time.strftime("%c")))
 
 
 async def help(self, message, args):

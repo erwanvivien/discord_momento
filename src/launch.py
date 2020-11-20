@@ -44,8 +44,7 @@ class Client(discord.Client):
             c = cmd[4:]
             retcode = await cmds[c](self, message, args)
         except Exception as error:
-            print(error)
-            return
+            return print(error)
 
 
 client = Client()
