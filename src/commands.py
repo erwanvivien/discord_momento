@@ -3,6 +3,15 @@ import time
 import datetime
 
 
+GROUPS = ["GRA", "GRB", "APPINGI1", "APPINGI2", "APPINGX1", "APPINGX2",
+          "APPINGX3", "BING B", "RIEMANN A1", "RIEMANN A2",
+          "SHANNON C1", "SHANNON C2", "SHANNON C3", "SHANNON C4", "SHANNON C5",
+          "TANENBAUM D1", "TANENBAUM D2", "TANENBAUM D3", "TANENBAUM D4", "TANENBAUM D5"]
+
+MAJORS = ["CSI", "MTI", "GISTRE", "SRS",
+          "SIGL", "SCIA", "TCOM", "GITM", "IMAGE"]
+
+
 async def error_message(message):
     embed = discord.Embed(title="Wrong arguments",
                           colour=discord.Colour(0x42aff2),
@@ -23,6 +32,22 @@ async def default(self, message, args):
     if args:
         return await error_message(message)
     return 0
+
+
+async def forceupdate(selft, message, args):
+    logging.warning("Started @ {}".format(time.strftime("%c")))
+    for d in [OUTPUT, CALDIR]:
+        if not os.path.isdir(d):
+            os.mkdir(d)
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
+        for i in MAJORS:
+            executor.submit(get_calendar, ASSISTANT_PROM, i)
+        for i in GROUPS:
+            executor.submit(get_calendar, STUDENT_PROM, i)
+
+    update_index()
+    logging.warning("Finished @ {}".format(time.strftime("%c")))
 
 
 async def set(self, message, args):
