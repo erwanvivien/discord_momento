@@ -14,9 +14,7 @@ STUDENT_PROM = get_year()
 ASSISTANT_PROM = STUDENT_PROM - 2
 
 ARCS = ["ARCS"]
-
 BACHELOR = ["BACHELOR"]
-
 ING1 = ["BING B", "RIEMANN A1", "RIEMANN A2",
         "SHANNON C1", "SHANNON C2", "SHANNON C3", "SHANNON C4", "SHANNON C5",
         "TANENBAUM D1", "TANENBAUM D2", "TANENBAUM D3", "TANENBAUM D4", "TANENBAUM D5"]
@@ -42,9 +40,19 @@ INTER = ["GITM S8 [FP]", "GITM S9 [FP]", "SDM S8 [FP]", "SDM S9 [FP]",
 EPITA = ARCS + BACHELOR + ING1 + MAJEURES + \
     APPRENTISAGE + PREPA + INTER
 
-ALL = {el.lower(): el for el in ALL_list}
+ALL = {
+    'arcs': (ARCS, 'ARCS'),
+    'bachelor': (BACHELOR, 'BACHELOR'),
+    'ing1': (ING1, 'ING1'),
+    'majeures': (MAJEURES, 'MAJEURES'),
+    'apprentisage': (APPRENTISAGE, 'APPRENTISAGE'),
+    'prepa': (PREPA, 'PREPA'),
+    'sharp': (PREPA_SHARP, 'PREPA_SHARP'),
+    'inter': (INTER, 'INTER'),
+    'epita': (EPITA, 'EPITA'),
+}
 
-# print(ALL)
+REPORT_CHANN = 10
 
 
 async def error_message(message, text="Please check ``help`` for more information"):
@@ -88,6 +96,7 @@ async def prefix(self, message, args):
 
 
 async def report(self, message, args):
+    print(REPORT_CHANN)
     if not args or len(args) != 1:
         return await error_message(message)
 
@@ -105,14 +114,16 @@ async def forceupdate(self, message, args):
     if not (message.author.id in [289145021922279425, 138282927502000128]):
         return await error_message(message)
 
-    if not args:
-        arg = 'ALL'
-    else:
-        arg = ' '.join(args)
-        if not arg in ALL:
-            return await error_message(message, f"{arg} not found")
+    try:
+        arg = (' '.join(args)).lower()
+        arg = ALL[arg]
+    except:
+        arg = ALL['epita']
 
-    print("You're admin")
+    embed = discord.Embed(title=f"Updating {arg[1]}...",
+                          colour=discord.Colour(0xFF0000))
+    msg = await message.channel.send(embed=embed)
+
     logging.warning("Started @ {}".format(time.strftime("%c")))
     for d in [OUTPUT, CALDIR]:
         if not os.path.isdir(d):
@@ -121,13 +132,19 @@ async def forceupdate(self, message, args):
     promo = get_year()
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=6) as executor:
-        for i in ALL:
+        for i in arg[0]:
             executor.submit(get_calendar, promo, i)
 
     # update_index()
     logging.warning("Finished @ {}".format(time.strftime("%c")))
 
-    embed = discord.Embed(title=f"Update was done for {arg}",
+    desc = "Other groups:\n"
+    for name in ALL:
+        desc += ' - ' + name.upper() + '\n'
+
+    await msg.delete()
+    embed = discord.Embed(title=f"Update was done for {arg[1]}",
+                          description=desc,
                           colour=discord.Colour(0x42aff2))
     await message.channel.send(embed=embed)
 
