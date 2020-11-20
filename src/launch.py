@@ -5,11 +5,9 @@ from discord.ext import commands
 # Personnal commands
 from commands import default, help, set, \
     next, week, author_name, prefix, \
-    report, missing, forceupdate, test, update
+    report, missing, test  # , update  , forceupdate
 
 from utils import get_content
-
-BOT_IMAGE_URL = "https://raw.githubusercontent.com/erwanvivien/momento/master/docs/momento-icon.png"
 
 cmds = {'': default,
         'help': help,
@@ -19,14 +17,10 @@ cmds = {'': default,
         'prefix': prefix,
         'report': report,
         'missing': missing,
-        'forceupdate': forceupdate,
+        # 'forceupdate': forceupdate,
         'test': test}
 
 token = get_content("token")
-
-# Checks if it's production, very bad
-if token[-1] == '0':
-    update()
 
 
 class Client(discord.Client):
