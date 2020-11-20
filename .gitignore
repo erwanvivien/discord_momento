@@ -3,3 +3,4 @@ token*
 *index.html
 calendars
 [^/]*.py
+test*
