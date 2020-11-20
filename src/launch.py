@@ -5,7 +5,7 @@ from discord.ext import commands
 # Personnal commands
 from commands import default, help, set, \
     next, week, author_name, prefix, \
-    report, missing, forceupdate, test
+    report, missing, forceupdate, test, update
 
 from utils import get_content
 
@@ -22,6 +22,12 @@ cmds = {'': default,
         'forceupdate': forceupdate,
         'test': test}
 
+token = get_content("token")
+
+# Checks if it's production, very bad
+if token[-1] == '0':
+    update()
+
 
 class Client(discord.Client):
     async def on_ready(self):
@@ -29,12 +35,7 @@ class Client(discord.Client):
         print('==============================================')
         await client.change_presence(status=discord.Status.online,
                                      activity=discord.Activity(name="chronos",
-                                                               type=discord.ActivityType.watching,
-                                                               details="google.fr",
-                                                               large_image_url=BOT_IMAGE_URL,
-                                                               small_image_url=BOT_IMAGE_URL,
-                                                               large_image_text=BOT_IMAGE_URL,
-                                                               small_image_text=BOT_IMAGE_URL))
+                                                               type=discord.ActivityType.watching))
 
     async def on_message(self, message):
         line = message.content.split(' ', 1)
@@ -73,4 +74,4 @@ class Client(discord.Client):
 
 
 client = Client()
-client.run(get_content("token"))
+client.run(token)
