@@ -41,6 +41,17 @@ INTER = ["GITM S8 [FP]", "GITM S9 [FP]", "SDM S8 [FP]", "SDM S9 [FP]",
 EPITA = ARCS + BACHELOR + ING1 + MAJEURES + \
     APPRENTISAGE + PREPA + INTER
 
+ALL = {
+    'arcs': (ARCS, 'ARCS'),
+    'bachelor': (BACHELOR, 'BACHELOR'),
+    'ing1': (ING1, 'ING1'),
+    'majeures': (MAJEURES, 'MAJEURES'),
+    'apprentisage': (APPRENTISAGE, 'APPRENTISAGE'),
+    'prepa': (PREPA, 'PREPA'),
+    'sharp': (PREPA_SHARP, 'PREPA_SHARP'),
+    'inter': (INTER, 'INTER'),
+    'epita': (EPITA, 'EPITA'), }
+
 
 BOT_COLOR = discord.Colour(0xFFBB74)
 ERROR_COLOR = discord.Colour(0xFF0000)
@@ -129,34 +140,9 @@ async def missing(self, message, args):
         await msg.add_reaction(emoji='🚧')
 
 
-async def forceupdate(self, message, args):
-    # Only bot owner can do this command
-    # 138282927502000128 => Lycoon#7542
-    # 289145021922279425 => Xiaojiba#1407
-
-    if not (message.author.id in [289145021922279425, 138282927502000128]):
-        return await error_message(message)
-
-    ALL = {
-        'arcs': (ARCS, 'ARCS'),
-        'bachelor': (BACHELOR, 'BACHELOR'),
-        'ing1': (ING1, 'ING1'),
-        'majeures': (MAJEURES, 'MAJEURES'),
-        'apprentisage': (APPRENTISAGE, 'APPRENTISAGE'),
-        'prepa': (PREPA, 'PREPA'),
-        'sharp': (PREPA_SHARP, 'PREPA_SHARP'),
-        'inter': (INTER, 'INTER'),
-        'epita': (EPITA, 'EPITA'), }
-
-    try:
-        arg = (' '.join(args)).lower()
-        arg = ALL[arg]
-    except:
+def update(arg=None):
+    if not arg:
         arg = ALL['epita']
-
-    embed = discord.Embed(title=f"Updating {arg[1]}...",
-                          colour=ERROR_COLOR)
-    msg = await message.channel.send(embed=embed)
 
     logging.warning("Started @ {}".format(time.strftime("%c")))
     for d in [OUTPUT, CALDIR]:
@@ -174,6 +160,29 @@ async def forceupdate(self, message, args):
     desc = "Other groups:\n"
     for name in ALL:
         desc += ' - ' + name.upper() + '\n'
+
+    return desc
+
+
+async def forceupdate(self, message, args):
+    # Only bot owner can do this command
+    # 138282927502000128 => Lycoon#7542
+    # 289145021922279425 => Xiaojiba#1407
+
+    if not (message.author.id in [289145021922279425, 138282927502000128, ]):
+        return await error_message(message)
+
+    try:
+        arg = (' '.join(args)).lower()
+        arg = ALL[arg]
+    except:
+        arg = ALL['epita']
+
+    desc = update(arg)
+
+    embed = discord.Embed(title=f"Updating {arg[1]}...",
+                          colour=ERROR_COLOR)
+    msg = await message.channel.send(embed=embed)
 
     await msg.delete()
     embed = discord.Embed(title=f"Update was done for {arg[1]}",
