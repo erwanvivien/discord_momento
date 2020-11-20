@@ -99,7 +99,6 @@ async def error_message(message):
                           description="Please check ``help`` for more information",
                           url="https://github.com/erwanvivien/momento#how-to-use-it")
     await message.channel.send(embed=embed)
-    return 1
 
 
 def author_name(author):
@@ -112,7 +111,6 @@ def author_name(author):
 async def default(self, message, args):
     if args:
         return await error_message(message)
-    return 0
 
 
 async def forceupdate(selft, message, args):
@@ -134,25 +132,40 @@ async def forceupdate(selft, message, args):
 async def set(self, message, args):
     if not args or len(args) != 1:
         return await error_message(message)
-    return 0
 
 
 async def next(self, message, args):
     if args:
         return await error_message(message)
-    return 0
 
 
 async def week(self, message, args):
     if not args or len(args) >= 2 or not args[0].isdigit():
         return await error_message(message)
-    return 0
 
 
 async def prefix(self, message, args):
     if not args or len(args) != 1:
         return await error_message(message)
-    return 0
+
+
+async def report(self, message, args):
+    if not args or len(args) != 1:
+        return await error_message(message)
+
+
+async def missing(self, message, args):
+    if not args or len(args) != 1:
+        return await error_message(message)
+
+
+async def forceupdate(self, message, args):
+    # Only bot owner can do this command
+    # 138282927502000128 => Lycoon#7542
+    # 289145021922279425 => Xiaojiba#1407
+    if not args or len(args) != 1 or not message.author.id in [289145021922279425, 138282927502000128]:
+        return await error_message(message)
+    print("You're admin")
 
 
 async def help(self, message, args):
