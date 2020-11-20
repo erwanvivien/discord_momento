@@ -8,7 +8,7 @@ import concurrent.futures
 
 from chronos import get_calendar, get_year
 
-import database
+from database import *
 
 
 OUTPUT = '.'
@@ -64,6 +64,7 @@ async def prefix(self, message, args):
         return await error_message(message)
 
     sql = f''' UPDATE users SET prefix = {args[0][0]} WHERE id = {message.author.id}'''
+    db_exec(sql)
 
 
 async def report(self, message, args):
