@@ -2,4 +2,4 @@ token*
 *__pycache__
 *index.html
 calendars
-*.py
+[^/]*.py
