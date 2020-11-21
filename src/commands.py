@@ -72,6 +72,29 @@ async def prefix(self, message, args):
     db_exec(sql)
 
 
+async def settings(self, message, args):
+    if args:
+        return await error_message(message)
+
+    sql = f''' SELECT * FROM users WHERE id = {message.author.id} '''
+    settings = db_exec(sql)[0]
+
+    embed = discord.Embed(
+        title=f"Current settings",
+        colour=BOT_COLOR)
+
+    print(settings)
+
+    settings = [('prefix', f'``{settings[1]}``'),
+                ('class', f'``{settings[2]}``')]
+
+    for set in settings:
+        embed.add_field(name=set[0], value=set[1], inline=True)
+
+    msg = await message.channel.send(embed=embed)
+    await msg.add_reaction(emoji='❌')
+
+
 async def report(self, message, args):
     report_channel = self.get_channel(REPORT_CHANN_ID)
     if not args:

@@ -4,7 +4,8 @@ from discord.ext import commands
 # Personnal commands
 from commands import default, help, set, next, \
     week, author_name, prefix, report, missing, \
-    test, error_message, BOT_IDS, DEV_IDS, REPORT_CHANN_ID  # , update  , forceupdate
+    test, error_message, settings, \
+    BOT_IDS, DEV_IDS, REPORT_CHANN_ID  # , update  , forceupdate
 
 from utils import get_content
 from database import db_exists, db_adduser, db_exec, db_create
@@ -19,6 +20,7 @@ COMMANDS = {
     'report': report,
     'missing': missing,
     'test': test,
+    'settings': settings,
     # 'forceupdate': forceupdate,
 }
 
@@ -50,7 +52,6 @@ class Client(discord.Client):
         if not user:
             db_adduser(message.author.id)
             prefix = "?"  # default prefix
-            print(f'Added {message.author.id} to database')
         else:
             prefix = user[1]  # custom user prefix
 
@@ -64,15 +65,22 @@ class Client(discord.Client):
 
         try:
             suffix = cmd[4:]  # Get command suffix
-            await COMMANDS[suffix](self, message, args)
-        except Exception:
-            return await error_message(message, title=f"Unknown command '{suffix}'")
+            cur_cmd = COMMANDS[suffix]
+            await cur_cmd(self, message, args)
+        except Exception as error:
+            print(error)
+            if not cur_cmd:
+                return await error_message(message, title=f"Unknown command '{suffix}'")
+            else:
+                return await error_message(message, title=f"The command {suffix} failed...",
+                                           desc=f"Please use ``mom{prefix}report`` if you think it's an unexpected behaviour")
 
     async def on_reaction_add(self, reaction, user):
         if user.id in BOT_IDS:
             return
 
-        print(f"{user} added a {reaction.emoji}")
+        # For debugging purposes
+        # print(f"{user} added a {reaction.emoji}")
 
         # Both dev ids
         if reaction.emoji in ['✅'] and user.id in DEV_IDS \

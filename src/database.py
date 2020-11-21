@@ -3,6 +3,7 @@ from sqlite3 import Error
 
 DB_PATH = "database.db"
 
+
 def db_create():
     sql_create_user = """CREATE TABLE IF NOT EXISTS users 
     (
