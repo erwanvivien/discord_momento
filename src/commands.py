@@ -6,14 +6,11 @@ import logging
 import os
 import concurrent.futures
 
-from chronos import get_calendar, get_year
-from database import db_exec
+import database as db
+
+ERRORS = []
 
 
-OUTPUT = '.'
-CALDIR = os.path.join(OUTPUT, 'calendars')
-STUDENT_PROM = get_year()
-ASSISTANT_PROM = STUDENT_PROM - 2
 DEV_IDS = [138282927502000128, 289145021922279425]
 BOT_IDS = [778983226110640159, 778983263871696897]
 REPORT_CHANN_ID = 779292533595045919
@@ -38,10 +35,6 @@ async def error_message(message, title=WRONG_USAGE, desc=HELP_USAGE):
     await message.channel.send(embed=embed)
 
 
-def author_name(author):
-    return author.name if not author.nick else author.nick
-
-
 async def default(self, message, args):
     if args:
         return await error_message(message)
@@ -61,12 +54,22 @@ async def logs(self, message, args):
     if not message.author.id in DEV_IDS:
         return await error_message(message, desc=ADMIN_USAGE)
 
+    global ERRORS
+    if args and args[0] == 'clean':
+        embed = discord.Embed(
+            title="All errors were cleaned up",
+            colour=ERROR_COLOR)
+        await message.channel.send(embed=embed)
+        ERRORS = []
+        return
+
     error_string = ""
-    for error in launch.ERRORS:
+    for error in ERRORS:
         error_string += str(error) + "\n\n"
 
     embed = discord.Embed(
-        title=str(error),
+        title=error_string if error_string != "" else "No logs were found",
+        description='mom?logs clean to remove all logs',
         colour=BOT_COLOR)
     await message.channel.send(embed=embed)
 
@@ -84,7 +87,12 @@ async def prefix(self, message, args):
         return await error_message(message)
 
     sql = f''' UPDATE users SET prefix = '{args[0][0]}' WHERE id = {message.author.id}'''
-    db_exec(sql)
+    db.exec(sql)
+
+    embed = discord.Embed(
+        title=f"Settings updated ✅",
+        colour=BOT_COLOR)
+    await message.channel.send(embed=embed)
 
 
 async def settings(self, message, args):
@@ -92,7 +100,7 @@ async def settings(self, message, args):
         return await error_message(message)
 
     sql = f''' SELECT * FROM users WHERE id = {message.author.id} '''
-    settings = db_exec(sql)[0]
+    settings = db.exec(sql)[0]
 
     embed = discord.Embed(
         title=f"Current settings",
@@ -126,82 +134,12 @@ async def report(self, message, args):
 
     embed = discord.Embed(
         title=f"⚠️ New submitted report",
-        description=f"(from `{message.author}`) {arg}",
+        description=f"from `{message.author}` at {time.ctime()}\n{arg}",
         colour=WARN_COLOR)
     msg = await report_channel.send(embed=embed)
 
     await msg.add_reaction(emoji='✅')
     await msg.add_reaction(emoji='🚧')
-
-
-async def missing(self, message, args):
-    REPORT_CHANN = self.get_channel(REPORT_CHANN_ID)
-    if not args:
-        return await error_message(message)
-    embed = discord.Embed(title=f"Thanks a lot for reporting this bug ! ❤️",
-                          colour=BOT_COLOR)
-    msg = await message.channel.send(embed=embed)
-
-    for arg in args:
-        embed = discord.Embed(title=f"⚠️   >REPORT<   ⚠️",
-                              description=f"{message.author}'s full report:\nMISSING ``{arg}``'s group",
-                              colour=ERROR_COLOR)
-        msg = await REPORT_CHANN.send(embed=embed)
-
-        await msg.add_reaction(emoji='✅')
-        await msg.add_reaction(emoji='🚧')
-
-
-# def update(arg=None):
-#     if not arg:
-#         arg = ALL['epita']
-
-#     logging.warning("Started @ {}".format(time.strftime("%c")))
-#     for d in [OUTPUT, CALDIR]:
-#         if not os.path.isdir(d):
-#             os.mkdir(d)
-
-#     promo = get_year()
-
-#     with concurrent.futures.ThreadPoolExecutor(max_workers=6) as executor:
-#         for i in arg[0]:
-#             executor.submit(get_calendar, promo, i)
-
-#     logging.warning("Finished @ {}".format(time.strftime("%c")))
-
-#     desc = "Other groups:\n"
-#     for name in ALL:
-#         desc += ' - ' + name.upper() + '\n'
-
-#     return desc
-
-
-# async def forceupdate(self, message, args):
-#     # Only bot owner can do this command
-#     # 138282927502000128 => Lycoon#7542
-#     # 289145021922279425 => Xiaojiba#1407
-
-#     if not (message.author.id in [289145021922279425, 138282927502000128, ]):
-#         return await error_message(message)
-
-#     try:
-#         arg = (' '.join(args)).lower()
-#         arg = ALL[arg]
-#     except:
-#         arg = ALL['epita']
-
-#     desc = update(arg)
-
-#     embed = discord.Embed(title=f"Updating {arg[1]}...",
-#                           colour=ERROR_COLOR)
-#     msg = await message.channel.send(embed=embed)
-
-#     await msg.delete()
-#     embed = discord.Embed(title=f"Update was done for {arg[1]}",
-#                           description=desc,
-#                           colour=BOT_COLOR)
-#     msg = await message.channel.send(embed=embed)
-#     await msg.add_reaction(emoji='❌')
 
 
 async def help(self, message, args):
@@ -230,10 +168,13 @@ async def help(self, message, args):
 
 
 async def test(self, message, args):
-    # Only bot owner can do this command
-    # 138282927502000128 => Lycoon#7542
-    # 289145021922279425 => Xiaojiba#1407
-
     if not (message.author.id in DEV_IDS):
         return await error_message(message, desc=ADMIN_USAGE)
     await message.channel.send("Did nothing :)")
+
+
+async def fail(self, message, args):
+    if not (message.author.id in DEV_IDS):
+        return await error_message(message, desc=ADMIN_USAGE)
+
+    mockedObj.raiseError.side_effect = Mock(side_effect=Exception('Test'))

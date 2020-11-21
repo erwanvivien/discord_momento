@@ -1,15 +1,14 @@
+from utils import author_name
+from utils import get_content
+import database as db
 import discord
 from discord.ext import commands
+import time
 
 # Removes circular imports
 import commands as cmds
 
-from utils import get_content
-from database import db_exists, db_adduser, db_exec, db_create
-
 # Global that stocks every bugs (real bugs)
-ERRORS = []
-
 COMMANDS = {
     '': cmds.default,
     'help': cmds.help,
@@ -18,10 +17,11 @@ COMMANDS = {
     'week': cmds.week,
     'prefix': cmds.prefix,
     'report': cmds.report,
-    'missing': cmds.missing,
     'test': cmds.test,
     'settings': cmds.settings,
-    'logs': cmds.logs
+    'logs': cmds.logs,
+    'fail': cmds.fail
+    # 'missing': cmds.missing,
     # 'forceupdate': forceupdate,
 }
 
@@ -49,9 +49,9 @@ class Client(discord.Client):
         args = split[1].split(' ') if len(split) > 1 else None
 
         # Retrieve user from database and create if non-existing
-        user = db_exists(message.author.id)
+        user = db.exists(message.author.id)
         if not user:
-            db_adduser(message.author.id)
+            db.adduser(message.author.id)
             prefix = "?"  # default prefix
         else:
             prefix = user[1]  # custom user prefix
@@ -61,7 +61,7 @@ class Client(discord.Client):
             return
 
         # Debugging stuff
-        name = cmds.author_name(message.author)
+        name = author_name(message.author)
         print(f"{name} issued {cmd} command. <{args}>")
 
         try:
@@ -69,13 +69,12 @@ class Client(discord.Client):
             cur_cmd = COMMANDS[suffix]
             await cur_cmd(self, message, args)
         except Exception as error:
-            global ERRORS
-            ERRORS += [str(error)]
+            cmds.ERRORS += [time.ctime() + ': ' + str(error)]
             if not cur_cmd:
-                return await error_message(message, title=f"Unknown command '{suffix}'")
+                return await cmds.error_message(message, title=f"Unknown command '{suffix}'")
             else:
-                return await error_message(message, title=f"The command {suffix} failed...",
-                                           desc=f"Please use ``mom{prefix}report`` if you think it's an unexpected behaviour")
+                return await cmds.error_message(message, title=f"The command {suffix} failed...",
+                                                desc=f"Please use ``mom{prefix}report`` if you think it's an unexpected behaviour")
 
     async def on_reaction_add(self, reaction, user):
         if user.id in cmds.BOT_IDS:
@@ -94,6 +93,6 @@ class Client(discord.Client):
             await reaction.message.delete()
 
 
-db_create()
+db.create()
 client = Client()
 client.run(token)
