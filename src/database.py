@@ -3,13 +3,13 @@ from sqlite3 import Error
 
 DB_PATH = "database.db"
 
-
 def db_create():
-    sql_create_user = """CREATE TABLE IF NOT EXISTS users (
-                                            id integer PRIMARY KEY,
-                                            prefix text NOT NULL,
-                                            class text
-                                        ); """
+    sql_create_user = """CREATE TABLE IF NOT EXISTS users 
+    (
+        id integer PRIMARY KEY,
+        prefix text NOT NULL,
+        class text
+    ); """
     db_exec(sql_create_user)
 
 
@@ -22,7 +22,6 @@ def db_adduser(userid):
 
 def db_exists(userid):
     sql = f'''SELECT * FROM users ORDER BY id'''
-
     db = db_exec(sql)
 
     for row in db:
