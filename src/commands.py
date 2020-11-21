@@ -13,8 +13,8 @@ OUTPUT = '.'
 CALDIR = os.path.join(OUTPUT, 'calendars')
 STUDENT_PROM = get_year()
 ASSISTANT_PROM = STUDENT_PROM - 2
-DEV_IDS = {138282927502000128, 289145021922279425}
-BOT_IDS = {778983226110640159, 778983263871696897}
+DEV_IDS = [138282927502000128, 289145021922279425]
+BOT_IDS = [778983226110640159, 778983263871696897]
 REPORT_CHANN_ID = 779292533595045919
 
 BOT_COLOR = discord.Colour(0xffbb74)
@@ -24,16 +24,17 @@ WARN_COLOR = discord.Colour(0xebdb34)
 REPORT_LEN_THRESHOLD = 70
 WRONG_USAGE = "Wrong usage in arguments"
 HELP_USAGE = "Please check ``help`` for more information"
+ADMIN_USAGE = "Are ye try'n to get ahead mayte ? This command's dev only"
 HOWTO_URL = "https://github.com/erwanvivien/momento#how-to-use-it"
 ICON = "https://raw.githubusercontent.com/erwanvivien/momento/master/docs/momento-icon.png"
 
 
-async def error_message(message, title = WRONG_USAGE, desc = HELP_USAGE):
-    embed = discord.Embed(title = title,
-                          description = desc,
-                          colour = ERROR_COLOR,
-                          url = HOWTO_URL)
-    await message.channel.send(embed = embed)
+async def error_message(message, title=WRONG_USAGE, desc=HELP_USAGE):
+    embed = discord.Embed(title=title,
+                          description=desc,
+                          colour=ERROR_COLOR,
+                          url=HOWTO_URL)
+    await message.channel.send(embed=embed)
 
 
 def author_name(author):
@@ -48,6 +49,7 @@ async def default(self, message, args):
 async def set(self, message, args):
     if not args or len(args) != 1:
         return await error_message(message)
+
 
 async def next(self, message, args):
     if args:
@@ -66,7 +68,7 @@ async def prefix(self, message, args):
     if not args[0][0] in ".?,;:/!$£¤%*@+#":
         return await error_message(message)
 
-    sql = f''' UPDATE users SET prefix = {args[0][0]} WHERE id = {message.author.id}'''
+    sql = f''' UPDATE users SET prefix = '{args[0][0]}' WHERE id = {message.author.id}'''
     db_exec(sql)
 
 
@@ -80,35 +82,36 @@ async def report(self, message, args):
         return await error_message(message, f"Reports must be at least {REPORT_LEN_THRESHOLD} characters long")
 
     embed = discord.Embed(
-        title = f"Thanks a lot for reporting this bug ! ❤️",
-        colour = BOT_COLOR)
-    await message.channel.send(embed = embed)
+        title=f"Thanks a lot for reporting this bug ! ❤️",
+        colour=BOT_COLOR)
+    await message.channel.send(embed=embed)
 
     embed = discord.Embed(
-        title = f"⚠️ New submitted report",
-        description = f"(from `{message.author}`) {arg}",
-        colour = WARN_COLOR)
-    msg = await report_channel.send(embed = embed)
+        title=f"⚠️ New submitted report",
+        description=f"(from `{message.author}`) {arg}",
+        colour=WARN_COLOR)
+    msg = await report_channel.send(embed=embed)
 
-    await msg.add_reaction(emoji = '✅')
-    await msg.add_reaction(emoji = '🚧')
+    await msg.add_reaction(emoji='✅')
+    await msg.add_reaction(emoji='🚧')
+
 
 async def missing(self, message, args):
     REPORT_CHANN = self.get_channel(REPORT_CHANN_ID)
     if not args:
         return await error_message(message)
-    embed = discord.Embed(title = f"Thanks a lot for reporting this bug ! ❤️",
-                          colour = BOT_COLOR)
-    msg = await message.channel.send(embed = embed)
+    embed = discord.Embed(title=f"Thanks a lot for reporting this bug ! ❤️",
+                          colour=BOT_COLOR)
+    msg = await message.channel.send(embed=embed)
 
     for arg in args:
-        embed = discord.Embed(title = f"⚠️   >REPORT<   ⚠️",
-                              description = f"{message.author}'s full report:\nMISSING ``{arg}``'s group",
-                              colour = ERROR_COLOR)
-        msg = await REPORT_CHANN.send(embed = embed)
+        embed = discord.Embed(title=f"⚠️   >REPORT<   ⚠️",
+                              description=f"{message.author}'s full report:\nMISSING ``{arg}``'s group",
+                              colour=ERROR_COLOR)
+        msg = await REPORT_CHANN.send(embed=embed)
 
-        await msg.add_reaction(emoji = '✅')
-        await msg.add_reaction(emoji = '🚧')
+        await msg.add_reaction(emoji='✅')
+        await msg.add_reaction(emoji='🚧')
 
 
 # def update(arg=None):
@@ -173,12 +176,12 @@ async def help(self, message, args):
             ('prefix', "Changes the ``?`` personnally")]
 
     embed = discord.Embed(
-        title = "Help information",
-        url = HOWTO_URL,
-        colour = discord.Colour(0x42aff2),
-        timestamp = datetime.datetime.utcfromtimestamp(time.time()))
-    embed.set_thumbnail(url = ICON)
-    embed.set_footer(text="Momento", icon_url = ICON)
+        title="Help information",
+        url=HOWTO_URL,
+        colour=discord.Colour(0x42aff2),
+        timestamp=datetime.datetime.utcfromtimestamp(time.time()))
+    embed.set_thumbnail(url=ICON)
+    embed.set_footer(text="Momento", icon_url=ICON)
 
     for cmd in cmds:
         embed.add_field(
@@ -194,5 +197,5 @@ async def test(self, message, args):
     # 289145021922279425 => Xiaojiba#1407
 
     if not (message.author.id in DEV_IDS):
-        return await error_message(message)
+        return await error_message(message, desc=ADMIN_USAGE)
     await message.channel.send("Did nothing :)")
