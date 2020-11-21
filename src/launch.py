@@ -2,7 +2,7 @@ import discord
 from discord.ext import commands
 
 # Removes circular imports
-import commands
+import commands as cmds
 
 from utils import get_content
 from database import db_exists, db_adduser, db_exec, db_create
@@ -11,17 +11,17 @@ from database import db_exists, db_adduser, db_exec, db_create
 ERRORS = []
 
 COMMANDS = {
-    '': commands.default,
-    'help': commands.help,
-    'set': commands.set,
-    'next': commands.next,
-    'week': commands.week,
-    'prefix': commands.prefix,
-    'report': commands.report,
-    'missing': commands.missing,
-    'test': commands.test,
-    'settings': commands.settings,
-    'logs': commands.logs
+    '': cmds.default,
+    'help': cmds.help,
+    'set': cmds.set,
+    'next': cmds.next,
+    'week': cmds.week,
+    'prefix': cmds.prefix,
+    'report': cmds.report,
+    'missing': cmds.missing,
+    'test': cmds.test,
+    'settings': cmds.settings,
+    'logs': cmds.logs
     # 'forceupdate': forceupdate,
 }
 
@@ -41,7 +41,7 @@ class Client(discord.Client):
                 type=discord.ActivityType.watching))
 
     async def on_message(self, message):
-        if message.author.id in commands.BOT_IDS:
+        if message.author.id in cmds.BOT_IDS:
             return
 
         split = message.content.split(' ', 1)  # separate mom?[cmd] from args
@@ -61,7 +61,7 @@ class Client(discord.Client):
             return
 
         # Debugging stuff
-        name = commands.author_name(message.author)
+        name = cmds.author_name(message.author)
         print(f"{name} issued {cmd} command. <{args}>")
 
         try:
@@ -78,15 +78,15 @@ class Client(discord.Client):
                                            desc=f"Please use ``mom{prefix}report`` if you think it's an unexpected behaviour")
 
     async def on_reaction_add(self, reaction, user):
-        if user.id in commands.BOT_IDS:
+        if user.id in cmds.BOT_IDS:
             return
 
         # For debugging purposes
         # print(f"{user} added a {reaction.emoji}")
 
         # Both dev ids
-        if reaction.emoji in ['✅'] and user.id in commands.DEV_IDS \
-                and reaction.message.channel.id == commands.REPORT_CHANN_ID:
+        if reaction.emoji in ['✅'] and user.id in cmds.DEV_IDS \
+                and reaction.message.channel.id == cmds.REPORT_CHANN_ID:
             await reaction.message.delete()
 
         # Both bot ids
