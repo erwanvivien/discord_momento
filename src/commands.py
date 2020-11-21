@@ -1,12 +1,16 @@
 import discord
 import time
 import datetime
+import pytz
 import logging
 
 import os
 import concurrent.futures
 
 import database as db
+
+from ics import Calendar
+from chronos import get_ics, get_class_id, get_teacher, is_today
 
 ERRORS = []
 CMD_DETAILS = {
@@ -35,7 +39,11 @@ HELP_USAGE = "Please check ``help`` for more information"
 ADMIN_USAGE = "Are ye try'n to get ahead mayte ? This command's dev only"
 HOWTO_URL = "https://github.com/erwanvivien/momento#how-to-use-it"
 ICON = "https://raw.githubusercontent.com/erwanvivien/momento/master/docs/momento-icon.png"
+BASE_LESSON = "https://chronos.epita.net/ade/custom/modules/plannings/eventInfo.jsp?eventId="
 
+def format_cmd(userid, cmd):
+    prefix = db.get_prefix(userid)
+    return f"mom{prefix}{cmd} {CMD_DETAILS[cmd]['usage']}"
 
 async def error_message(message, title=WRONG_USAGE, desc=HELP_USAGE):
     embed = discord.Embed(title=title,
@@ -56,8 +64,43 @@ async def set(self, message, args):
 
 
 async def next(self, message, args):
-    if args:
-        return await error_message(message)
+    if not args:
+        args = db.get_class(message.author.id)
+        if not args:
+            cmd = format_cmd(message.author.id, "set")
+            return await error_message(message, 
+                "You don't have any default class set.", 
+                f"Please check the ``{cmd}`` command.")
+    else:
+        args = ' '.join(args)
+
+    ics = get_ics(args)
+    if not ics:
+        return await error_message(message, 
+            f"The class '{args}' does not exist", 
+            "Please refer to existing iChronos classes.")
+
+    now = datetime.datetime.now()
+    for event in ics.timeline.start_after(now.replace(tzinfo = pytz.UTC)):
+        start = datetime.datetime.fromisoformat(str(event.begin))
+        end = datetime.datetime.fromisoformat(str(event.end))
+
+        fmt = "%a %d %B"
+        desc = f"Starts at **{start:%Hh%M}** and ends at **{end:%Hh%M}** on **{start.strftime(fmt)}**\n"
+        desc += f"Teacher : **{get_teacher(event)}**\n"
+
+        embed = discord.Embed(
+            title = f"Next lesson is *{event.name}*",
+            description = desc,
+            url = BASE_LESSON + get_class_id(event),
+            colour = BOT_COLOR,
+            timestamp = now)
+        embed.set_thumbnail(url=ICON)
+        embed.set_footer(text="Momento", icon_url=ICON)
+        await message.channel.send(embed=embed)
+
+        # we only need the first lesson
+        break
 
 
 async def logs(self, message, args):

@@ -15,10 +15,20 @@ def create():
 
 
 def adduser(userid):
-    sql = f'''INSERT INTO users (id,prefix, class) VALUES (?, ?, ?)'''
+    sql = f'''INSERT INTO users (id, prefix, class) VALUES (?, ?, ?)'''
     args = (userid, '?', None)
 
     exec(sql, args)
+
+
+def get_class(userid):
+    sql = f'SELECT class FROM users WHERE id={userid}'
+    return exec(sql)[0][0]
+
+
+def get_prefix(userid):
+    sql = f'SELECT prefix FROM users WHERE id={userid}'
+    return exec(sql)[0][0]
 
 
 def exists(userid):
