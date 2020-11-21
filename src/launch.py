@@ -31,7 +31,7 @@ token = get_content("token")
 
 class Client(discord.Client):
     async def on_ready(self):
-        print('[Momento] Logged on as {0}'.format(self.user))
+        print(f'[Momento] Logged on as {self.user}')
         print('---------------------------------------')
 
         await client.change_presence(
