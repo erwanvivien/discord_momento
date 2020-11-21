@@ -94,7 +94,7 @@ async def report(self, message, args):
     await msg.add_reaction(emoji = '🚧')
 
 async def missing(self, message, args):
-    REPORT_CHANN = self.get_channel(779292533595045919)
+    REPORT_CHANN = self.get_channel(REPORT_CHANN_ID)
     if not args:
         return await error_message(message)
     embed = discord.Embed(title = f"Thanks a lot for reporting this bug ! ❤️",
