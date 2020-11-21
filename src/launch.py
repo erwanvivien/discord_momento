@@ -10,19 +10,17 @@ import commands as cmds
 
 # Global that stocks every bugs (real bugs)
 COMMANDS = {
-    '': cmds.default,
-    'help': cmds.help,
-    'set': cmds.set,
-    'next': cmds.next,
-    'week': cmds.week,
-    'prefix': cmds.prefix,
-    'report': cmds.report,
-    'test': cmds.test,
-    'settings': cmds.settings,
-    'logs': cmds.logs,
-    'fail': cmds.fail
-    # 'missing': cmds.missing,
-    # 'forceupdate': forceupdate,
+    '': {'cmd': cmds.default, 'usage': "Shows today's schedule"},
+    'help': {'cmd': cmds.help, 'usage': "Shows help information"},
+    'set': {'cmd': cmds.set, 'usage': "Sets your default class"},
+    'next': {'cmd': cmds.next, 'usage': "Shows the very next class"},
+    'week': {'cmd': cmds.week, 'usage': "Shows week's schedule"},
+    'prefix': {'cmd': cmds.prefix, 'usage': "Changes the ``?`` personally"},
+    'report': {'cmd': cmds.report, 'usage': "Reports a bug to devs"},
+    'settings': {'cmd': cmds.settings, 'usage': "Shows current user's settings"},
+    'test': {'cmd': cmds.test},
+    'logs': {'cmd': cmds.logs},
+    'fail': {'cmd': cmds.fail},
 }
 
 # Discord bot token
@@ -64,9 +62,10 @@ class Client(discord.Client):
         name = author_name(message.author)
         print(f"{name} issued {cmd} command. <{args}>")
 
+        cur_cmd = None
         try:
             suffix = cmd[4:]  # Get command suffix
-            cur_cmd = COMMANDS[suffix]
+            cur_cmd = COMMANDS[suffix]['cmd']
             await cur_cmd(self, message, args)
         except Exception as error:
             cmds.ERRORS += [time.ctime() + ': ' + str(error)]
@@ -89,7 +88,7 @@ class Client(discord.Client):
             await reaction.message.delete()
 
         # Both bot ids
-        if reaction.emoji in ['❌'] and reaction.message.author.id in BOT_IDS:
+        if reaction.emoji in ['❌'] and reaction.message.author.id in cmds.BOT_IDS:
             await reaction.message.delete()
 
 

@@ -9,6 +9,16 @@ import concurrent.futures
 import database as db
 
 ERRORS = []
+CMD_DETAILS = {
+    '': {"desc": "Shows today's schedule", "usage": "[class]"},
+    'next': {"desc": "Shows the very next class", "usage": "[class]"},
+    'week': {"desc": "Shows week's schedule", "usage": "[class]"},
+    'set': {"desc": "Sets your default class", "usage": "<class>"},
+    'help': {"desc": "Shows help information", "usage": ""},
+    'settings': {"desc": "Shows current user's settings", "usage": ""},
+    'prefix': {"desc": "Changes the ``?`` for the user", "usage": "<prefix>"},
+    'report': {"desc": "Reports a bug to the devs", "usage": "<message>"}
+}
 
 DEV_IDS = [138282927502000128, 289145021922279425]
 BOT_IDS = [778983226110640159, 778983263871696897]
@@ -18,6 +28,7 @@ BOT_COLOR = discord.Colour(0xffbb74)
 ERROR_COLOR = discord.Colour(0xff0000)
 WARN_COLOR = discord.Colour(0xebdb34)
 
+DEFAULT_PREFIX = '?'
 REPORT_LEN_THRESHOLD = 70
 WRONG_USAGE = "Wrong usage in arguments"
 HELP_USAGE = "Please check ``help`` for more information"
@@ -142,14 +153,7 @@ async def report(self, message, args):
 
 
 async def help(self, message, args):
-    prefix = '?'
-    cmds = [('', "Shows today's schedule"),
-            ('help', "Displays the help"),
-            ('set', "Sets your default class"),
-            ('next', "Shows the very next class"),
-            ('week', "Shows week's schedule"),
-            ('prefix', "Changes the ``?`` personnally")]
-
+    prefix = DEFAULT_PREFIX
     embed = discord.Embed(
         title="Help information",
         url=HOWTO_URL,
@@ -158,9 +162,9 @@ async def help(self, message, args):
     embed.set_thumbnail(url=ICON)
     embed.set_footer(text="Momento", icon_url=ICON)
 
-    for cmd in cmds:
-        embed.add_field(
-            name=f'mom{prefix}{cmd[0]}', value=cmd[1], inline=True)
+    for key in CMD_DETAILS.keys():
+        cmd_detail = CMD_DETAILS[key]
+        embed.add_field(name=f'mom{prefix}{key}', value=cmd_detail['desc'], inline=True)
 
     msg = await message.channel.send(embed=embed)
     await msg.add_reaction(emoji='❌')
