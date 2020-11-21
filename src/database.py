@@ -26,6 +26,21 @@ def get_class(userid):
     return exec(sql)[0][0]
 
 
+def set_class(userid, group):
+    sql = f"UPDATE users SET class = '{group}' WHERE id = {userid}"
+    exec(sql)
+
+
+def set_prefix(userid, prefix):
+    sql = f"UPDATE users SET prefix = '{prefix}' WHERE id = {userid}"
+    exec(sql)
+
+
+def get_settings(userid):
+    sql = f"SELECT * FROM users WHERE id = {userid}"
+    return exec(sql)[0]
+
+
 def get_prefix(userid):
     sql = f'SELECT prefix FROM users WHERE id={userid}'
     return exec(sql)[0][0]

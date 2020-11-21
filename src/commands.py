@@ -31,6 +31,7 @@ REPORT_CHANN_ID = 779292533595045919
 BOT_COLOR = discord.Colour(0xffbb74)
 ERROR_COLOR = discord.Colour(0xff0000)
 WARN_COLOR = discord.Colour(0xebdb34)
+VALID_COLOR = discord.Colour(0x55DA50)
 
 DEFAULT_PREFIX = '?'
 REPORT_LEN_THRESHOLD = 70
@@ -59,8 +60,17 @@ async def default(self, message, args):
 
 
 async def set(self, message, args):
-    if not args or len(args) != 1:
+    if not args:
         return await error_message(message)
+    
+    args = ' '.join(args)
+    db.set_class(message.author.id, args)
+
+    embed = discord.Embed(
+        title = f"You set '{args}' as your default class.",
+        colour = VALID_COLOR
+    )
+    await message.channel.send(embed=embed)
 
 
 async def next(self, message, args):
@@ -139,8 +149,7 @@ async def prefix(self, message, args):
     if not args[0][0] in ".?,;:/!$£¤%*@+#":
         return await error_message(message)
 
-    sql = f''' UPDATE users SET prefix = '{args[0][0]}' WHERE id = {message.author.id}'''
-    db.exec(sql)
+    db.set_prefix(message.author.id, args[0])
 
     embed = discord.Embed(
         title=f"Settings updated ✅",
@@ -151,15 +160,11 @@ async def prefix(self, message, args):
 async def settings(self, message, args):
     if args:
         return await error_message(message)
-
-    sql = f''' SELECT * FROM users WHERE id = {message.author.id} '''
-    settings = db.exec(sql)[0]
-
+    
+    settings = db.get_settings(message.author.id)
     embed = discord.Embed(
         title=f"Current settings",
         colour=BOT_COLOR)
-
-    print(settings)
 
     settings = [('prefix', f'``{settings[1]}``'),
                 ('class', f'``{settings[2]}``')]
