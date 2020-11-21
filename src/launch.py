@@ -18,12 +18,13 @@ COMMANDS = {
     'prefix': prefix,
     'report': report,
     'missing': missing,
-    'test': test
+    'test': test,
     # 'forceupdate': forceupdate,
 }
 
 # Discord bot token
 token = get_content("token")
+
 
 class Client(discord.Client):
     async def on_ready(self):
@@ -33,40 +34,39 @@ class Client(discord.Client):
         await client.change_presence(
             status=discord.Status.online,
             activity=discord.Activity(
-            name="Chronos",
-            type=discord.ActivityType.watching))
+                name="Chronos",
+                type=discord.ActivityType.watching))
 
     async def on_message(self, message):
         if message.author.id in BOT_IDS:
             return
 
-        split = message.content.split(' ', 1) # separate mom?[cmd] from args
-        args = split[1].split(' ') if len(split) > 1 else None
+        split = message.content.split(' ', 1)  # separate mom?[cmd] from args
         cmd = split[0]
+        args = split[1].split(' ') if len(split) > 1 else None
 
         # Retrieve user from database and create if non-existing
         user = db_exists(message.author.id)
         if not user:
             db_adduser(message.author.id)
-            prefix = "?" # default prefix
+            prefix = "?"  # default prefix
             print(f'Added {message.author.id} to database')
         else:
-            print(user)
-            prefix = user[1] # custom user prefix
-        
+            prefix = user[1]  # custom user prefix
+
         # Check if a bot command
         if not cmd.startswith(f"mom{prefix}"):
             return
 
         # Debugging stuff
         name = author_name(message.author)
-        print(f"{name} issued {cmd} command. [{args}]")
+        print(f"{name} issued {cmd} command. <{args}>")
 
         try:
-            suffix = cmd[4:] # Get command suffix
+            suffix = cmd[4:]  # Get command suffix
             await COMMANDS[suffix](self, message, args)
         except Exception:
-            return await error_message(message, title = f"Unknown command '{suffix}'")
+            return await error_message(message, title=f"Unknown command '{suffix}'")
 
     async def on_reaction_add(self, reaction, user):
         if user.id in BOT_IDS:
@@ -82,6 +82,7 @@ class Client(discord.Client):
         # Both bot ids
         if reaction.emoji in ['❌'] and reaction.message.author.id in BOT_IDS:
             await reaction.message.delete()
+
 
 db_create()
 client = Client()
