@@ -82,10 +82,8 @@ async def default(self, message, args):
     embed.set_thumbnail(url=ICON)
     embed.set_footer(text="Momento", icon_url=ICON)
 
-    now = datetime.datetime.now().replace(tzinfo = pytz.UTC)
-    events = ics.timeline.start_after(now)
-
     exists = 0
+    events = ics.timeline.today()
     for event in events:
         exists = 1
         start = datetime.datetime.fromisoformat(str(event.begin))
