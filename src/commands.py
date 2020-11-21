@@ -3,14 +3,12 @@ import time
 import datetime
 import pytz
 import logging
-
 import os
 import concurrent.futures
 
 import database as db
-
 from ics import Calendar
-from chronos import get_ics, get_class_id, get_teacher, is_today
+from chronos import get_ics_feed, get_ics_week, get_class_id, get_teacher, is_today
 
 ERRORS = []
 CMD_DETAILS = {
@@ -31,7 +29,7 @@ REPORT_CHANN_ID = 779292533595045919
 BOT_COLOR = discord.Colour(0xffbb74)
 ERROR_COLOR = discord.Colour(0xff0000)
 WARN_COLOR = discord.Colour(0xebdb34)
-VALID_COLOR = discord.Colour(0x55DA50)
+VALID_COLOR = discord.Colour(0x55da50)
 
 DEFAULT_PREFIX = '?'
 REPORT_LEN_THRESHOLD = 70
@@ -42,9 +40,27 @@ HOWTO_URL = "https://github.com/erwanvivien/momento#how-to-use-it"
 ICON = "https://raw.githubusercontent.com/erwanvivien/momento/master/docs/momento-icon.png"
 BASE_LESSON = "https://chronos.epita.net/ade/custom/modules/plannings/eventInfo.jsp?eventId="
 
-def format_cmd(userid, cmd):
-    prefix = db.get_prefix(userid)
+def format_cmd(prefix, cmd):
     return f"mom{prefix}{cmd} {CMD_DETAILS[cmd]['usage']}"
+
+async def target_class(message, args):
+    if not args:
+        args = db.get_class(message.author.id)
+        if not args:
+            cmd = format_cmd(db.get_prefix(message.author.id), "set")
+            return await error_message(message, 
+                "You don't have any default class set.", 
+                f"Please check the ``{cmd}`` command.")
+    else:
+        args = ' '.join(args)
+
+    ics = get_ics_feed(args)
+    if not ics:
+        return await error_message(message, 
+            f"The class '{args}' does not exist", 
+            "Please refer to existing iChronos classes.")
+
+    return ics
 
 async def error_message(message, title=WRONG_USAGE, desc=HELP_USAGE):
     embed = discord.Embed(title=title,
@@ -55,8 +71,39 @@ async def error_message(message, title=WRONG_USAGE, desc=HELP_USAGE):
 
 
 async def default(self, message, args):
-    if args:
-        return await error_message(message)
+    ics = await target_class(message, args)
+    if not ics:
+        return
+    
+    embed = discord.Embed(
+            title = f"Today's lessons are",
+            colour = BOT_COLOR,
+            timestamp = datetime.datetime.utcfromtimestamp(time.time()))
+    embed.set_thumbnail(url=ICON)
+    embed.set_footer(text="Momento", icon_url=ICON)
+
+    now = datetime.datetime.now().replace(tzinfo = pytz.UTC)
+    events = ics.timeline.start_after(now)
+
+    exists = 0
+    for event in events:
+        exists = 1
+        start = datetime.datetime.fromisoformat(str(event.begin))
+        end = datetime.datetime.fromisoformat(str(event.end))
+
+        fmt = "%a %d %B"
+        desc = f"Lesson [link]({BASE_LESSON + get_class_id(event)})\n"
+        desc += f"Starts at **{start:%Hh%M}** and ends at **{end:%Hh%M}** on **{start.strftime(fmt)}**\n"
+        desc += f"Teacher : **{get_teacher(event)}**\n"
+
+        embed.add_field(name=f"__{str(event.name)}__", value=desc, inline=False)
+    
+    if not exists:
+        embed = discord.Embed(
+            title = "It seems you are free today!",
+            colour = BOT_COLOR,
+            timestamp = datetime.datetime.utcfromtimestamp(time.time()))
+    await message.channel.send(embed=embed)
 
 
 async def set(self, message, args):
@@ -74,24 +121,12 @@ async def set(self, message, args):
 
 
 async def next(self, message, args):
-    if not args:
-        args = db.get_class(message.author.id)
-        if not args:
-            cmd = format_cmd(message.author.id, "set")
-            return await error_message(message, 
-                "You don't have any default class set.", 
-                f"Please check the ``{cmd}`` command.")
-    else:
-        args = ' '.join(args)
-
-    ics = get_ics(args)
+    ics = await target_class(message, args)
     if not ics:
-        return await error_message(message, 
-            f"The class '{args}' does not exist", 
-            "Please refer to existing iChronos classes.")
+        return
 
-    now = datetime.datetime.now()
-    for event in ics.timeline.start_after(now.replace(tzinfo = pytz.UTC)):
+    now = datetime.datetime.now().replace(tzinfo = pytz.UTC)
+    for event in ics.timeline.start_after(now):
         start = datetime.datetime.fromisoformat(str(event.begin))
         end = datetime.datetime.fromisoformat(str(event.end))
 
@@ -104,7 +139,7 @@ async def next(self, message, args):
             description = desc,
             url = BASE_LESSON + get_class_id(event),
             colour = BOT_COLOR,
-            timestamp = now)
+            timestamp = datetime.datetime.utcfromtimestamp(time.time()))
         embed.set_thumbnail(url=ICON)
         embed.set_footer(text="Momento", icon_url=ICON)
         await message.channel.send(embed=embed)

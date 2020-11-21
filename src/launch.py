@@ -50,9 +50,7 @@ class Client(discord.Client):
         user = db.exists(message.author.id)
         if not user:
             db.adduser(message.author.id)
-            prefix = "?"  # default prefix
-        else:
-            prefix = user[1]  # custom user prefix
+        prefix = db.get_prefix(message.author.id)
 
         # Check if a bot command
         if not cmd.startswith(f"mom{prefix}"):
@@ -71,24 +69,24 @@ class Client(discord.Client):
             cmds.ERRORS += [time.ctime() + ': ' + str(error)]
             if not cur_cmd:
                 return await cmds.error_message(message, title=f"Unknown command '{suffix}'")
-            else:
-                return await cmds.error_message(message, title=f"The command {suffix} failed...",
-                                                desc=f"Please use ``mom{prefix}report`` if you think it's an unexpected behaviour")
+            cmd = cmds.format_cmd(prefix, "report")
+            await cmds.error_message(message, 
+                title=f"The command {suffix} failed...",
+                desc=f"Please use ``{cmd}`` if you think it's an unexpected behaviour")
 
     async def on_reaction_add(self, reaction, user):
         if user.id in cmds.BOT_IDS:
             return
 
-        # For debugging purposes
-        # print(f"{user} added a {reaction.emoji}")
+        # Debugging stuff
+        print(f"{user} added a {reaction.emoji}")
 
         # Both dev ids
         if reaction.emoji in ['✅'] and user.id in cmds.DEV_IDS \
                 and reaction.message.channel.id == cmds.REPORT_CHANN_ID:
             await reaction.message.delete()
-
-        # Both bot ids
-        if reaction.emoji in ['❌'] and reaction.message.author.id in cmds.BOT_IDS:
+            
+        if reaction.emoji in ['❌']:
             await reaction.message.delete()
 
 

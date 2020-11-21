@@ -1,8 +1,8 @@
 import sqlite3
+from commands import DEFAULT_PREFIX
 from sqlite3 import Error
 
 DB_PATH = "database.db"
-
 
 def create():
     sql_create_user = """CREATE TABLE IF NOT EXISTS users 
@@ -16,7 +16,7 @@ def create():
 
 def adduser(userid):
     sql = f'''INSERT INTO users (id, prefix, class) VALUES (?, ?, ?)'''
-    args = (userid, '?', None)
+    args = (userid, DEFAULT_PREFIX, None)
 
     exec(sql, args)
 
