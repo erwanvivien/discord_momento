@@ -1,26 +1,27 @@
 import discord
 from discord.ext import commands
 
-# Personnal commands
-from commands import default, help, set, next, \
-    week, author_name, prefix, report, missing, \
-    test, error_message, settings, \
-    BOT_IDS, DEV_IDS, REPORT_CHANN_ID  # , update  , forceupdate
+# Removes circular imports
+import commands
 
 from utils import get_content
 from database import db_exists, db_adduser, db_exec, db_create
 
+# Global that stocks every bugs (real bugs)
+ERRORS = []
+
 COMMANDS = {
-    '': default,
-    'help': help,
-    'set': set,
-    'next': next,
-    'week': week,
-    'prefix': prefix,
-    'report': report,
-    'missing': missing,
-    'test': test,
-    'settings': settings,
+    '': commands.default,
+    'help': commands.help,
+    'set': commands.set,
+    'next': commands.next,
+    'week': commands.week,
+    'prefix': commands.prefix,
+    'report': commands.report,
+    'missing': commands.missing,
+    'test': commands.test,
+    'settings': commands.settings,
+    'logs': commands.logs
     # 'forceupdate': forceupdate,
 }
 
@@ -40,7 +41,7 @@ class Client(discord.Client):
                 type=discord.ActivityType.watching))
 
     async def on_message(self, message):
-        if message.author.id in BOT_IDS:
+        if message.author.id in commands.BOT_IDS:
             return
 
         split = message.content.split(' ', 1)  # separate mom?[cmd] from args
@@ -60,7 +61,7 @@ class Client(discord.Client):
             return
 
         # Debugging stuff
-        name = author_name(message.author)
+        name = commands.author_name(message.author)
         print(f"{name} issued {cmd} command. <{args}>")
 
         try:
@@ -68,7 +69,8 @@ class Client(discord.Client):
             cur_cmd = COMMANDS[suffix]
             await cur_cmd(self, message, args)
         except Exception as error:
-            print(error)
+            global ERRORS
+            ERRORS += [str(error)]
             if not cur_cmd:
                 return await error_message(message, title=f"Unknown command '{suffix}'")
             else:
@@ -76,15 +78,15 @@ class Client(discord.Client):
                                            desc=f"Please use ``mom{prefix}report`` if you think it's an unexpected behaviour")
 
     async def on_reaction_add(self, reaction, user):
-        if user.id in BOT_IDS:
+        if user.id in commands.BOT_IDS:
             return
 
         # For debugging purposes
         # print(f"{user} added a {reaction.emoji}")
 
         # Both dev ids
-        if reaction.emoji in ['✅'] and user.id in DEV_IDS \
-                and reaction.message.channel.id == REPORT_CHANN_ID:
+        if reaction.emoji in ['✅'] and user.id in commands.DEV_IDS \
+                and reaction.message.channel.id == commands.REPORT_CHANN_ID:
             await reaction.message.delete()
 
         # Both bot ids

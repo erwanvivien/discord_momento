@@ -9,6 +9,7 @@ import concurrent.futures
 from chronos import get_calendar, get_year
 from database import db_exec
 
+
 OUTPUT = '.'
 CALDIR = os.path.join(OUTPUT, 'calendars')
 STUDENT_PROM = get_year()
@@ -56,6 +57,20 @@ async def next(self, message, args):
         return await error_message(message)
 
 
+async def logs(self, message, args):
+    if not message.author.id in DEV_IDS:
+        return await error_message(message, desc=ADMIN_USAGE)
+
+    error_string = ""
+    for error in launch.ERRORS:
+        error_string += str(error) + "\n\n"
+
+    embed = discord.Embed(
+        title=str(error),
+        colour=BOT_COLOR)
+    await message.channel.send(embed=embed)
+
+
 async def week(self, message, args):
     if not args or len(args) >= 2 or not args[0].isdigit():
         return await error_message(message)
@@ -96,10 +111,10 @@ async def settings(self, message, args):
 
 
 async def report(self, message, args):
-    report_channel = self.get_channel(REPORT_CHANN_ID)
     if not args:
         return await error_message(message)
 
+    report_channel = self.get_channel(REPORT_CHANN_ID)
     arg = ' '.join(args)
     if len(arg) < REPORT_LEN_THRESHOLD:
         return await error_message(message, f"Reports must be at least {REPORT_LEN_THRESHOLD} characters long")
