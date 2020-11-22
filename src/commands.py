@@ -17,7 +17,8 @@ CMD_DETAILS = {
     'week': {"desc": "Shows week's schedule", "usage": "[class]"},
     'set': {"desc": "Sets your default class", "usage": "<class>"},
     'help': {"desc": "Shows help information", "usage": ""},
-    'settings': {"desc": "Shows current user's settings", "usage": ""},
+    'settings': {"desc": "Shows current user settings", "usage": ""},
+    'clear': {"desc": "Clears all user settings", "usage": ""},
     'prefix': {"desc": "Changes the ``?`` for the user", "usage": "<prefix>"},
     'report': {"desc": "Reports a bug to the devs", "usage": "<message>"}
 }
@@ -34,7 +35,7 @@ VALID_COLOR = discord.Colour(0x55da50)
 DEFAULT_PREFIX = '?'
 REPORT_LEN_THRESHOLD = 70
 WRONG_USAGE = "Wrong usage in arguments"
-HELP_USAGE = "Please check ``help`` for more information"
+HELP_USAGE = "Please check ``help`` for more information."
 ADMIN_USAGE = "Are ye try'n to get ahead mayte ? This command's dev only"
 HOWTO_URL = "https://github.com/erwanvivien/momento#how-to-use-it"
 ICON = "https://raw.githubusercontent.com/erwanvivien/momento/master/docs/momento-icon.png"
@@ -49,7 +50,7 @@ async def target_class(message, args):
         if not args:
             cmd = format_cmd(db.get_prefix(message.author.id), "set")
             return await error_message(message, 
-                "You don't have any default class set.", 
+                "You don't have any default class set", 
                 f"Please check the ``{cmd}`` command.")
     else:
         args = ' '.join(args)
@@ -63,11 +64,11 @@ async def target_class(message, args):
     return ics
 
 async def error_message(message, title=WRONG_USAGE, desc=HELP_USAGE):
-    embed = discord.Embed(title=title,
-                          description=desc,
-                          colour=ERROR_COLOR,
-                          url=HOWTO_URL)
-    await message.channel.send(embed=embed)
+    embed = discord.Embed(title = title,
+                          description = desc,
+                          colour = ERROR_COLOR,
+                          url = HOWTO_URL)
+    await message.channel.send(embed = embed)
 
 
 async def default(self, message, args):
@@ -79,8 +80,8 @@ async def default(self, message, args):
             title = f"Today's lessons are",
             colour = BOT_COLOR,
             timestamp = datetime.datetime.utcfromtimestamp(time.time()))
-    embed.set_thumbnail(url=ICON)
-    embed.set_footer(text="Momento", icon_url=ICON)
+    embed.set_thumbnail(url = ICON)
+    embed.set_footer(text = "Momento", icon_url = ICON)
 
     exists = 0
     events = ics.timeline.today()
@@ -101,7 +102,7 @@ async def default(self, message, args):
             title = "It seems you are free today!",
             colour = BOT_COLOR,
             timestamp = datetime.datetime.utcfromtimestamp(time.time()))
-    await message.channel.send(embed=embed)
+    await message.channel.send(embed = embed)
 
 
 async def set(self, message, args):
@@ -112,10 +113,10 @@ async def set(self, message, args):
     db.set_class(message.author.id, args)
 
     embed = discord.Embed(
-        title = f"You set '{args}' as your default class.",
+        title = f"You set '{args}' as your default class",
         colour = VALID_COLOR
     )
-    await message.channel.send(embed=embed)
+    await message.channel.send(embed = embed)
 
 
 async def next(self, message, args):
@@ -138,9 +139,9 @@ async def next(self, message, args):
             url = BASE_LESSON + get_class_id(event),
             colour = BOT_COLOR,
             timestamp = datetime.datetime.utcfromtimestamp(time.time()))
-        embed.set_thumbnail(url=ICON)
-        embed.set_footer(text="Momento", icon_url=ICON)
-        await message.channel.send(embed=embed)
+        embed.set_thumbnail(url = ICON)
+        embed.set_footer(text = "Momento", icon_url = ICON)
+        await message.channel.send(embed = embed)
 
         # we only need the first lesson
         break
@@ -153,8 +154,8 @@ async def logs(self, message, args):
     global ERRORS
     if args and args[0] == 'clean':
         embed = discord.Embed(
-            title="All errors were cleaned up",
-            colour=ERROR_COLOR)
+            title = "All errors were cleaned up",
+            colour = ERROR_COLOR)
         await message.channel.send(embed=embed)
         ERRORS = []
         return
@@ -164,9 +165,17 @@ async def logs(self, message, args):
         error_string += str(error) + "\n\n"
 
     embed = discord.Embed(
-        title=error_string if error_string != "" else "No logs were found",
-        description='mom?logs clean to remove all logs',
-        colour=BOT_COLOR)
+        title = error_string if error_string != "" else "No logs were found",
+        description = 'mom?logs clean to remove all logs',
+        colour = BOT_COLOR)
+    await message.channel.send(embed=embed)
+
+
+async def clear(self, message, args):
+    db.clear_all(message.author.id)
+    embed = discord.Embed(
+        title = "All your user settings were cleared from our server",
+        colour = VALID_COLOR)
     await message.channel.send(embed=embed)
 
 
@@ -185,9 +194,9 @@ async def prefix(self, message, args):
     db.set_prefix(message.author.id, args[0])
 
     embed = discord.Embed(
-        title=f"Settings updated ✅",
-        colour=BOT_COLOR)
-    await message.channel.send(embed=embed)
+        title = f"You set '{args[0]}' as your default prefix",
+        colour = VALID_COLOR)
+    await message.channel.send(embed = embed)
 
 
 async def settings(self, message, args):
@@ -196,8 +205,8 @@ async def settings(self, message, args):
     
     settings = db.get_settings(message.author.id)
     embed = discord.Embed(
-        title=f"Current settings",
-        colour=BOT_COLOR)
+        title = f"Your current settings",
+        colour = BOT_COLOR)
 
     settings = [('prefix', f'``{settings[1]}``'),
                 ('class', f'``{settings[2]}``')]
@@ -219,46 +228,46 @@ async def report(self, message, args):
         return await error_message(message, f"Reports must be at least {REPORT_LEN_THRESHOLD} characters long")
 
     embed = discord.Embed(
-        title=f"Thanks a lot for reporting this bug ! ❤️",
-        colour=BOT_COLOR)
+        title = f"Thanks a lot for reporting this bug! ❤️",
+        colour = BOT_COLOR)
     await message.channel.send(embed=embed)
 
     embed = discord.Embed(
-        title=f"⚠️ New submitted report",
-        description=f"from `{message.author}` at {time.ctime()}\n{arg}",
-        colour=WARN_COLOR)
+        title = f"⚠️ New submitted report",
+        description = f"from `{message.author}` at {time.ctime()}\n{arg}",
+        colour = WARN_COLOR)
     msg = await report_channel.send(embed=embed)
 
-    await msg.add_reaction(emoji='✅')
-    await msg.add_reaction(emoji='🚧')
+    await msg.add_reaction(emoji = '✅')
+    await msg.add_reaction(emoji = '🚧')
 
 
 async def help(self, message, args):
     prefix = DEFAULT_PREFIX
     embed = discord.Embed(
-        title="Help information",
-        url=HOWTO_URL,
-        colour=discord.Colour(0x42aff2),
-        timestamp=datetime.datetime.utcfromtimestamp(time.time()))
-    embed.set_thumbnail(url=ICON)
-    embed.set_footer(text="Momento", icon_url=ICON)
+        title = "Help information",
+        url = HOWTO_URL,
+        colour = discord.Colour(0x42aff2),
+        timestamp = datetime.datetime.utcfromtimestamp(time.time()))
+    embed.set_thumbnail(url = ICON)
+    embed.set_footer(text = "Momento", icon_url = ICON)
 
     for key in CMD_DETAILS.keys():
         cmd_detail = CMD_DETAILS[key]
-        embed.add_field(name=f'mom{prefix}{key}', value=cmd_detail['desc'], inline=True)
+        embed.add_field(name = f'mom{prefix}{key}', value = cmd_detail['desc'], inline = True)
 
-    msg = await message.channel.send(embed=embed)
-    await msg.add_reaction(emoji='❌')
+    msg = await message.channel.send(embed = embed)
+    await msg.add_reaction(emoji = '❌')
 
 
 async def test(self, message, args):
     if not (message.author.id in DEV_IDS):
-        return await error_message(message, desc=ADMIN_USAGE)
+        return await error_message(message, desc = ADMIN_USAGE)
     await message.channel.send("Did nothing :)")
 
 
 async def fail(self, message, args):
     if not (message.author.id in DEV_IDS):
-        return await error_message(message, desc=ADMIN_USAGE)
+        return await error_message(message, desc = ADMIN_USAGE)
 
-    mockedObj.raiseError.side_effect = Mock(side_effect=Exception('Test'))
+    #mockedObj.raiseError.side_effect = Mock(side_effect=Exception('Test'))
