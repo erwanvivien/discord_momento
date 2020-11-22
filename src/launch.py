@@ -89,7 +89,6 @@ class Client(discord.Client):
         if reaction.emoji in ['❌']:
             await reaction.message.delete()
 
-
 db.create()
 client = Client()
 client.run(token)
