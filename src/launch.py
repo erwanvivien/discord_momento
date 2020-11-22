@@ -11,6 +11,7 @@ import commands as cmds
 # Linking commands to their working function
 COMMANDS = {
     '': {'cmd': cmds.default},
+    'day': {'cmd': cmds.default},
     'help': {'cmd': cmds.help},
     'set': {'cmd': cmds.set},
     'next': {'cmd': cmds.next},
