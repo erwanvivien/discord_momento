@@ -114,6 +114,7 @@ async def default(self, message, args):
             title="It seems you are free today!",
             colour=BOT_COLOR,
             timestamp=datetime.datetime.utcfromtimestamp(time.time()))
+
     await message.channel.send(embed=embed)
 
 # Triggered when command 'mom?set <class>' is used
@@ -197,6 +198,8 @@ async def clear(self, message, args):
     db.clear_all(message.author.id)
     embed = discord.Embed(
         title="All your user settings were cleared from our server",
+        description="Entering any of the mom? commands brings you back to " +
+        "our database",
         colour=VALID_COLOR)
     await message.channel.send(embed=embed)
 
