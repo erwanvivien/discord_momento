@@ -9,6 +9,7 @@ import concurrent.futures
 import database as db
 from ics import Calendar
 from chronos import get_ics_feed, get_ics_week, get_class_id, get_teacher, is_today
+from utils import PROFESSORS
 
 ERRORS = []
 CMD_DETAILS = {
@@ -157,7 +158,14 @@ async def next(self, message, args):
         url=BASE_LESSON + get_class_id(event),
         colour=BOT_COLOR,
         timestamp=datetime.datetime.utcfromtimestamp(time.time()))
-    embed.set_thumbnail(url=ICON)
+
+    try:
+        name = get_teacher(event).lower()
+        url = PROFESSORS[get_teacher(event).lower()]
+    except:
+        url = ICON
+
+    embed.set_thumbnail(url=url)
     embed.set_footer(text="Momento", icon_url=ICON)
     await message.channel.send(embed=embed)
 
@@ -259,7 +267,8 @@ async def week(self, message, args):
                              value=desc, inline=False)
 
     for embed in embeds:
-        await message.channel.send(embed=embed)
+        msg = await message.channel.send(embed=embed)
+        await msg.add_reaction(emoji='❌')
 
 # Triggered when command 'mom?prefix <prefix>' is used
 # Sets 'prefix' field to the new prefix in the 'users' table
