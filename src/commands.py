@@ -50,7 +50,7 @@ def format_cmd(prefix, cmd):
 # Checks validity for a given class
 
 
-async def class_ics(message, args):
+async def class_ics(message, args, week=None):
     if not args:
         args = db.get_class(message.author.id)
         if not args:
@@ -61,7 +61,7 @@ async def class_ics(message, args):
     else:
         args = ' '.join(args)
 
-    ics = get_ics_feed(args)
+    ics = get_ics_feed(args) if week == None else get_ics_week(args, week)
     if not ics:
         return await error_message(message,
                                    f"The class '{args}' does not exist",
@@ -204,8 +204,62 @@ async def clear(self, message, args):
 
 
 async def week(self, message, args):
-    if not args or len(args) >= 2 or not args[0].isdigit():
-        return await error_message(message)
+    if not args:
+        week_nb = 0
+        group = [db.get_class(message.author.id)]
+    else:
+        try:
+            week_nb = int(args[0])
+            group = args[1:] if len(
+                args) >= 2 else [db.get_class(message.author.id)]
+        except:
+            week_nb = 0
+            group = args
+
+    ics = await class_ics(message, group, week_nb)
+    if not ics:
+        return
+
+    events = ics.timeline
+    exists = any(True for _ in events)
+
+    embeds = []
+
+    embed = discord.Embed(
+        title="It seems you are free this week!" if not exists else "Week's lessons are",
+        colour=BOT_COLOR,
+        timestamp=datetime.datetime.utcfromtimestamp(time.time()))
+    if exists:
+        embed.set_thumbnail(url=ICON).set_footer(text="Momento", icon_url=ICON)
+
+    embeds += [embed]
+    size = 0
+
+    for event in events:
+        start = datetime.datetime.fromisoformat(str(event.begin))
+        end = datetime.datetime.fromisoformat(str(event.end))
+
+        fmt = "%a %d %B"
+        desc = f"Lesson [link]({BASE_LESSON + get_class_id(event)})\n"
+        desc += f"Starts at **{start:%Hh%M}** and ends at **{end:%Hh%M}** on **{start.strftime(fmt)}**\n"
+        desc += f"Teacher : **{get_teacher(event)}**\n"
+
+        size += len(desc)
+        if (size >= 5000):
+            embed = discord.Embed(
+                title="Following week's lessons are",
+                colour=BOT_COLOR,
+                timestamp=datetime.datetime.utcfromtimestamp(time.time()))
+            embed.set_thumbnail(url=ICON).set_footer(
+                text="Momento", icon_url=ICON)
+            embeds += [embed]
+            size = 0
+
+        embeds[-1].add_field(name=f"__{str(event.name)}__",
+                             value=desc, inline=False)
+
+    for embed in embeds:
+        await message.channel.send(embed=embed)
 
 # Triggered when command 'mom?prefix <prefix>' is used
 # Sets 'prefix' field to the new prefix in the 'users' table
