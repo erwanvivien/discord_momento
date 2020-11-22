@@ -174,9 +174,8 @@ async def logs(self, message, args):
         embed = discord.Embed(
             title="All errors were cleaned up",
             colour=ERROR_COLOR)
-        await message.channel.send(embed=embed)
         ERRORS = []
-        return
+        return await message.channel.send(embed=embed)
 
     error_string = ""
     for error in ERRORS:
@@ -307,4 +306,4 @@ async def fail(self, message, args):
     if not (message.author.id in DEV_IDS):
         return await error_message(message, desc=ADMIN_USAGE)
 
-    #mockedObj.raiseError.side_effect = Mock(side_effect=Exception('Test'))
+    mockedObj.raiseError.side_effect = Mock(side_effect=Exception('Test'))

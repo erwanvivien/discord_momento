@@ -67,9 +67,9 @@ class Client(discord.Client):
             cur_cmd = COMMANDS[suffix]['cmd']
             await cur_cmd(self, message, args)
         except Exception as error:
-            cmds.ERRORS += [time.ctime() + ': ' + str(error)]
             if not cur_cmd:
                 return await cmds.error_message(message, title=f"Unknown command '{suffix}'")
+            cmds.ERRORS += [time.ctime() + ': ' + str(error)]
             cmd = cmds.format_cmd(prefix, "report")
             await cmds.error_message(message,
                                      title=f"The command {suffix} failed...",
