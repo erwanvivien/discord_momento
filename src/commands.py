@@ -87,21 +87,19 @@ async def default(self, message, args):
     if not ics:
         return
 
-    embed = discord.Embed(
-        title=f"Today's lessons are",
-        colour=BOT_COLOR,
-        timestamp=datetime.datetime.utcfromtimestamp(time.time()))
-    embed.set_thumbnail(url=ICON)
-    embed.set_footer(text="Momento", icon_url=ICON)
-
+    # This is only to test (on weekends bruh)
+    # now = datetime.datetime.now().replace(tzinfo=pytz.UTC)
+    # events = ics.timeline.start_after(now)
     events = ics.timeline.today()
     exists = any(True for _ in events)
 
-    if not exists:
-        embed = discord.Embed(
-            title="It seems you are free today!",
-            colour=BOT_COLOR,
-            timestamp=datetime.datetime.utcfromtimestamp(time.time()))
+    embed = discord.Embed(
+        title="It seems you are free today!" if not exists else "Today's lessons are",
+        colour=BOT_COLOR,
+        timestamp=datetime.datetime.utcfromtimestamp(time.time()))
+    if exists:
+        embed.set_thumbnail(url=ICON)
+        embed.set_footer(text="Momento", icon_url=ICON)
 
     for event in events:
         start = datetime.datetime.fromisoformat(str(event.begin))
