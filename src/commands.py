@@ -214,7 +214,9 @@ async def clear(self, message, args):
 async def week(self, message, args):
     if not args:
         week_nb = 0
-        group = [db.get_class(message.author.id)]
+        group = db.get_class(message.author.id)
+        if group:
+            group = [group]
     else:
         try:
             week_nb = int(args[0])
