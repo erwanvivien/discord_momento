@@ -50,7 +50,7 @@ def format_cmd(prefix, cmd):
 # Checks validity for a given class
 
 
-async def target_class(message, args):
+async def class_ics(message, args):
     if not args:
         args = db.get_class(message.author.id)
         if not args:
@@ -83,7 +83,7 @@ async def error_message(message, title=WRONG_USAGE, desc=HELP_USAGE):
 
 
 async def default(self, message, args):
-    ics = await target_class(message, args)
+    ics = await class_ics(message, args)
     if not ics:
         return
 
@@ -136,7 +136,7 @@ async def set(self, message, args):
 
 
 async def next(self, message, args):
-    ics = await target_class(message, args)
+    ics = await class_ics(message, args)
     if not ics:
         return
 
