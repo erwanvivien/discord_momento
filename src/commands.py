@@ -42,49 +42,57 @@ ICON = "https://raw.githubusercontent.com/erwanvivien/momento/master/docs/moment
 BASE_LESSON = "https://chronos.epita.net/ade/custom/modules/plannings/eventInfo.jsp?eventId="
 
 # Returns formatted command with custom user prefix and usage
+
+
 def format_cmd(prefix, cmd):
     return f"mom{prefix}{cmd} {CMD_DETAILS[cmd]['usage']}"
 
 # Checks validity for a given class
+
+
 async def target_class(message, args):
     if not args:
         args = db.get_class(message.author.id)
         if not args:
             cmd = format_cmd(db.get_prefix(message.author.id), "set")
-            return await error_message(message, 
-                "You don't have any default class set", 
-                f"Please check the ``{cmd}`` command.")
+            return await error_message(message,
+                                       "You don't have any default class set",
+                                       f"Please check the ``{cmd}`` command.")
     else:
         args = ' '.join(args)
 
     ics = get_ics_feed(args)
     if not ics:
-        return await error_message(message, 
-            f"The class '{args}' does not exist", 
-            "Please refer to existing iChronos classes.")
+        return await error_message(message,
+                                   f"The class '{args}' does not exist",
+                                   "Please refer to existing iChronos classes.")
 
     return ics
 
 # Utility function to format error messages
+
+
 async def error_message(message, title=WRONG_USAGE, desc=HELP_USAGE):
-    embed = discord.Embed(title = title,
-                          description = desc,
-                          colour = ERROR_COLOR,
-                          url = HOWTO_URL)
-    await message.channel.send(embed = embed)
+    embed = discord.Embed(title=title,
+                          description=desc,
+                          colour=ERROR_COLOR,
+                          url=HOWTO_URL)
+    await message.channel.send(embed=embed)
 
 # Triggered when command 'mom?' is used
+
+
 async def default(self, message, args):
     ics = await target_class(message, args)
     if not ics:
         return
-    
+
     embed = discord.Embed(
-            title = f"Today's lessons are",
-            colour = BOT_COLOR,
-            timestamp = datetime.datetime.utcfromtimestamp(time.time()))
-    embed.set_thumbnail(url = ICON)
-    embed.set_footer(text = "Momento", icon_url = ICON)
+        title=f"Today's lessons are",
+        colour=BOT_COLOR,
+        timestamp=datetime.datetime.utcfromtimestamp(time.time()))
+    embed.set_thumbnail(url=ICON)
+    embed.set_footer(text="Momento", icon_url=ICON)
 
     exists = 0
     events = ics.timeline.today()
@@ -98,36 +106,41 @@ async def default(self, message, args):
         desc += f"Starts at **{start:%Hh%M}** and ends at **{end:%Hh%M}** on **{start.strftime(fmt)}**\n"
         desc += f"Teacher : **{get_teacher(event)}**\n"
 
-        embed.add_field(name=f"__{str(event.name)}__", value=desc, inline=False)
-    
+        embed.add_field(name=f"__{str(event.name)}__",
+                        value=desc, inline=False)
+
     if not exists:
         embed = discord.Embed(
-            title = "It seems you are free today!",
-            colour = BOT_COLOR,
-            timestamp = datetime.datetime.utcfromtimestamp(time.time()))
-    await message.channel.send(embed = embed)
+            title="It seems you are free today!",
+            colour=BOT_COLOR,
+            timestamp=datetime.datetime.utcfromtimestamp(time.time()))
+    await message.channel.send(embed=embed)
 
 # Triggered when command 'mom?set <class>' is used
+
+
 async def set(self, message, args):
     if not args:
         return await error_message(message)
-    
+
     args = ' '.join(args)
     db.set_class(message.author.id, args)
 
     embed = discord.Embed(
-        title = f"You set '{args}' as your default class",
-        colour = VALID_COLOR
+        title=f"You set '{args}' as your default class",
+        colour=VALID_COLOR
     )
-    await message.channel.send(embed = embed)
+    await message.channel.send(embed=embed)
 
 # Triggered when command 'mom?next [class]' is used
+
+
 async def next(self, message, args):
     ics = await target_class(message, args)
     if not ics:
         return
 
-    now = datetime.datetime.now().replace(tzinfo = pytz.UTC)
+    now = datetime.datetime.now().replace(tzinfo=pytz.UTC)
     for event in ics.timeline.start_after(now):
         start = datetime.datetime.fromisoformat(str(event.begin))
         end = datetime.datetime.fromisoformat(str(event.end))
@@ -137,20 +150,22 @@ async def next(self, message, args):
         desc += f"Teacher : **{get_teacher(event)}**\n"
 
         embed = discord.Embed(
-            title = f"Next lesson is *{event.name}*",
-            description = desc,
-            url = BASE_LESSON + get_class_id(event),
-            colour = BOT_COLOR,
-            timestamp = datetime.datetime.utcfromtimestamp(time.time()))
-        embed.set_thumbnail(url = ICON)
-        embed.set_footer(text = "Momento", icon_url = ICON)
-        await message.channel.send(embed = embed)
+            title=f"Next lesson is *{event.name}*",
+            description=desc,
+            url=BASE_LESSON + get_class_id(event),
+            colour=BOT_COLOR,
+            timestamp=datetime.datetime.utcfromtimestamp(time.time()))
+        embed.set_thumbnail(url=ICON)
+        embed.set_footer(text="Momento", icon_url=ICON)
+        await message.channel.send(embed=embed)
 
         # we only need the first lesson
         break
 
 # Triggered when command 'mom?logs' is used
 # Appends and shows errors that occurred during runtime
+
+
 async def logs(self, message, args):
     if not message.author.id in DEV_IDS:
         return await error_message(message, desc=ADMIN_USAGE)
@@ -158,8 +173,8 @@ async def logs(self, message, args):
     global ERRORS
     if args and args[0] == 'clean':
         embed = discord.Embed(
-            title = "All errors were cleaned up",
-            colour = ERROR_COLOR)
+            title="All errors were cleaned up",
+            colour=ERROR_COLOR)
         await message.channel.send(embed=embed)
         ERRORS = []
         return
@@ -169,27 +184,33 @@ async def logs(self, message, args):
         error_string += str(error) + "\n\n"
 
     embed = discord.Embed(
-        title = error_string if error_string != "" else "No logs were found",
-        description = 'mom?logs clean to remove all logs',
-        colour = BOT_COLOR)
+        title=error_string if error_string != "" else "No logs were found",
+        description='mom?logs clean to remove all logs',
+        colour=BOT_COLOR)
     await message.channel.send(embed=embed)
 
 # Triggered when command 'mom?clear' is used
 # Deletes 'users' table from database
+
+
 async def clear(self, message, args):
     db.clear_all(message.author.id)
     embed = discord.Embed(
-        title = "All your user settings were cleared from our server",
-        colour = VALID_COLOR)
+        title="All your user settings were cleared from our server",
+        colour=VALID_COLOR)
     await message.channel.send(embed=embed)
 
 # Triggered when command 'mom?week [class]' is used
+
+
 async def week(self, message, args):
     if not args or len(args) >= 2 or not args[0].isdigit():
         return await error_message(message)
 
 # Triggered when command 'mom?prefix <prefix>' is used
 # Sets 'prefix' field to the new prefix in the 'users' table
+
+
 async def prefix(self, message, args):
     if not args or len(args) != 1 or len(args[0]) > 1:
         return await error_message(message)
@@ -200,19 +221,21 @@ async def prefix(self, message, args):
     db.set_prefix(message.author.id, args[0])
 
     embed = discord.Embed(
-        title = f"You set '{args[0]}' as your default prefix",
-        colour = VALID_COLOR)
-    await message.channel.send(embed = embed)
+        title=f"You set '{args[0]}' as your default prefix",
+        colour=VALID_COLOR)
+    await message.channel.send(embed=embed)
 
 # Triggered when command 'mom?settings' is used
+
+
 async def settings(self, message, args):
     if args:
         return await error_message(message)
-    
+
     settings = db.get_settings(message.author.id)
     embed = discord.Embed(
-        title = f"Your current settings",
-        colour = BOT_COLOR)
+        title=f"Your current settings",
+        colour=BOT_COLOR)
 
     settings = [('prefix', f'``{settings[1]}``'),
                 ('class', f'``{settings[2]}``')]
@@ -225,6 +248,8 @@ async def settings(self, message, args):
 
 # Triggered when command 'mom?report <message>' is used
 # Sends report message to a dedicated Discord channel
+
+
 async def report(self, message, args):
     if not args:
         return await error_message(message)
@@ -235,47 +260,50 @@ async def report(self, message, args):
         return await error_message(message, f"Reports must be at least {REPORT_LEN_THRESHOLD} characters long")
 
     embed = discord.Embed(
-        title = f"Thanks a lot for reporting this bug! ❤️",
-        colour = BOT_COLOR)
+        title=f"Thanks a lot for reporting this bug! ❤️",
+        colour=BOT_COLOR)
     await message.channel.send(embed=embed)
 
     embed = discord.Embed(
-        title = f"⚠️ New submitted report",
-        description = f"from `{message.author}` at {time.ctime()}\n{arg}",
-        colour = WARN_COLOR)
+        title=f"⚠️ New submitted report",
+        description=f"from `{message.author}` at {time.ctime()}\n{arg}",
+        colour=WARN_COLOR)
     msg = await report_channel.send(embed=embed)
 
-    await msg.add_reaction(emoji = '✅')
-    await msg.add_reaction(emoji = '🚧')
+    await msg.add_reaction(emoji='✅')
+    await msg.add_reaction(emoji='🚧')
 
 # Triggered when command 'mom?help' is used
 # Loops through each existing command printing its details
+
+
 async def help(self, message, args):
     prefix = DEFAULT_PREFIX
     embed = discord.Embed(
-        title = "Help information",
-        url = HOWTO_URL,
-        colour = discord.Colour(0x42aff2),
-        timestamp = datetime.datetime.utcfromtimestamp(time.time()))
-    embed.set_thumbnail(url = ICON)
-    embed.set_footer(text = "Momento", icon_url = ICON)
+        title="Help information",
+        url=HOWTO_URL,
+        colour=discord.Colour(0x42aff2),
+        timestamp=datetime.datetime.utcfromtimestamp(time.time()))
+    embed.set_thumbnail(url=ICON)
+    embed.set_footer(text="Momento", icon_url=ICON)
 
     for key in CMD_DETAILS.keys():
         cmd_detail = CMD_DETAILS[key]
-        embed.add_field(name = f'mom{prefix}{key}', value = cmd_detail['desc'], inline = True)
+        embed.add_field(name=f'mom{prefix}{key}',
+                        value=cmd_detail['desc'], inline=True)
 
-    msg = await message.channel.send(embed = embed)
-    await msg.add_reaction(emoji = '❌')
+    msg = await message.channel.send(embed=embed)
+    await msg.add_reaction(emoji='❌')
 
 
 async def test(self, message, args):
     if not (message.author.id in DEV_IDS):
-        return await error_message(message, desc = ADMIN_USAGE)
+        return await error_message(message, desc=ADMIN_USAGE)
     await message.channel.send("Did nothing :)")
 
 
 async def fail(self, message, args):
     if not (message.author.id in DEV_IDS):
-        return await error_message(message, desc = ADMIN_USAGE)
+        return await error_message(message, desc=ADMIN_USAGE)
 
     #mockedObj.raiseError.side_effect = Mock(side_effect=Exception('Test'))

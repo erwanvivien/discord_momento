@@ -27,6 +27,7 @@ COMMANDS = {
 # Discord bot token
 token = get_content("token")
 
+
 class Client(discord.Client):
     async def on_ready(self):
         print(f'[Momento] Logged on as {self.user}')
@@ -70,9 +71,9 @@ class Client(discord.Client):
             if not cur_cmd:
                 return await cmds.error_message(message, title=f"Unknown command '{suffix}'")
             cmd = cmds.format_cmd(prefix, "report")
-            await cmds.error_message(message, 
-                title=f"The command {suffix} failed...",
-                desc=f"Please use ``{cmd}`` if you think it's an unexpected behaviour")
+            await cmds.error_message(message,
+                                     title=f"The command {suffix} failed...",
+                                     desc=f"Please use ``{cmd}`` if you think it's an unexpected behaviour")
 
     async def on_reaction_add(self, reaction, user):
         if user.id in cmds.BOT_IDS:
@@ -88,6 +89,7 @@ class Client(discord.Client):
 
         if reaction.emoji in ['❌']:
             await reaction.message.delete()
+
 
 db.create()
 client = Client()
