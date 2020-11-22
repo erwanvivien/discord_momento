@@ -370,3 +370,13 @@ async def fail(self, message, args):
         return await error_message(message, desc=ADMIN_USAGE)
 
     mockedObj.raiseError.side_effect = Mock(side_effect=Exception('Test'))
+
+
+async def db_(self, message, args):
+    if not (message.author.id in DEV_IDS):
+        return await error_message(message, desc=ADMIN_USAGE)
+
+    sql = 'SELECT * FROM users'
+    res = db.exec(sql)
+    for r in res:
+        await message.channel.send(str(r))

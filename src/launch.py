@@ -22,6 +22,7 @@ COMMANDS = {
     'clear': {'cmd': cmds.clear},
     'test': {'cmd': cmds.test},
     'logs': {'cmd': cmds.logs},
+    'db': {'cmd': cmds.db_},
     'fail': {'cmd': cmds.fail},
 }
 
