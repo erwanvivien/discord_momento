@@ -140,26 +140,26 @@ async def next(self, message, args):
         return
 
     now = datetime.datetime.now().replace(tzinfo=pytz.UTC)
-    for event in ics.timeline.start_after(now):
-        start = datetime.datetime.fromisoformat(str(event.begin))
-        end = datetime.datetime.fromisoformat(str(event.end))
+    # Should be using this but the function is overloaded Kek
+    # event = next(ics.timeline.start_after(now))
+    event = ics.timeline.start_after(now).__next__()
 
-        fmt = "%a %d %B"
-        desc = f"Starts at **{start:%Hh%M}** and ends at **{end:%Hh%M}** on **{start.strftime(fmt)}**\n"
-        desc += f"Teacher : **{get_teacher(event)}**\n"
+    start = datetime.datetime.fromisoformat(str(event.begin))
+    end = datetime.datetime.fromisoformat(str(event.end))
 
-        embed = discord.Embed(
-            title=f"Next lesson is *{event.name}*",
-            description=desc,
-            url=BASE_LESSON + get_class_id(event),
-            colour=BOT_COLOR,
-            timestamp=datetime.datetime.utcfromtimestamp(time.time()))
-        embed.set_thumbnail(url=ICON)
-        embed.set_footer(text="Momento", icon_url=ICON)
-        await message.channel.send(embed=embed)
+    fmt = "%a %d %B"
+    desc = f"Starts at **{start:%Hh%M}** and ends at **{end:%Hh%M}** on **{start.strftime(fmt)}**\n"
+    desc += f"Teacher : **{get_teacher(event)}**\n"
 
-        # we only need the first lesson
-        break
+    embed = discord.Embed(
+        title=f"Next lesson is *{event.name}*",
+        description=desc,
+        url=BASE_LESSON + get_class_id(event),
+        colour=BOT_COLOR,
+        timestamp=datetime.datetime.utcfromtimestamp(time.time()))
+    embed.set_thumbnail(url=ICON)
+    embed.set_footer(text="Momento", icon_url=ICON)
+    await message.channel.send(embed=embed)
 
 # Triggered when command 'mom?logs' is used
 # Appends and shows errors that occurred during runtime
