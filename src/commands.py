@@ -94,10 +94,16 @@ async def default(self, message, args):
     embed.set_thumbnail(url=ICON)
     embed.set_footer(text="Momento", icon_url=ICON)
 
-    exists = 0
     events = ics.timeline.today()
+    exists = any(True for _ in events)
+
+    if not exists:
+        embed = discord.Embed(
+            title="It seems you are free today!",
+            colour=BOT_COLOR,
+            timestamp=datetime.datetime.utcfromtimestamp(time.time()))
+
     for event in events:
-        exists = 1
         start = datetime.datetime.fromisoformat(str(event.begin))
         end = datetime.datetime.fromisoformat(str(event.end))
 
@@ -108,12 +114,6 @@ async def default(self, message, args):
 
         embed.add_field(name=f"__{str(event.name)}__",
                         value=desc, inline=False)
-
-    if not exists:
-        embed = discord.Embed(
-            title="It seems you are free today!",
-            colour=BOT_COLOR,
-            timestamp=datetime.datetime.utcfromtimestamp(time.time()))
 
     await message.channel.send(embed=embed)
 
