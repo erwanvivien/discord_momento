@@ -10,6 +10,7 @@ Invite the bot on your server through [this link](https://discord.com/). Type `m
 
 - `mom?set <class>` - sets your default class (so that you don't have to specify it each time)
 - `mom?prefix <class>` - changes your ``?`` personally
+- `mom?clear` - clears user settings from database (prefix and default class)
 - `mom?report <message>` - reports a bug to the devs (it has to be at least 70-characters long)
 - `mom?next [class]` - shows the very next lesson of the day
 - `mom?week [class]` - shows week's schedule
