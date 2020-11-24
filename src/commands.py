@@ -4,12 +4,13 @@ import datetime
 import pytz
 import logging
 import os
+import math
 import concurrent.futures
 
 import database as db
 from ics import Calendar
 from chronos import get_ics_feed, get_ics_week, get_class_id, get_teacher, is_today
-from utils import PROFESSORS
+from utils import PROFESSORS, get_time_diff, format_time
 
 ERRORS = []
 CMD_DETAILS = {
@@ -86,12 +87,13 @@ async def default(self, message, args):
     # now = datetime.datetime.now().replace(tzinfo=pytz.UTC)
     # events = ics.timeline.start_after(now)
     events = list(ics.timeline.today())
+    now = datetime.datetime.utcnow().replace(tzinfo=pytz.UTC)
     exists = any(events)
 
     embed = discord.Embed(
         title="It seems you are free today!" if not exists else "Today's lessons are",
         colour=BOT_COLOR,
-        timestamp=datetime.datetime.utcfromtimestamp(time.time()))
+        timestamp=now)
     
     if exists:
         embed.set_thumbnail(url=ICON)
@@ -100,13 +102,25 @@ async def default(self, message, args):
     for event in events:
         start = datetime.datetime.fromisoformat(str(event.begin))
         end = datetime.datetime.fromisoformat(str(event.end))
+        lesson_link = BASE_LESSON + get_class_id(event)
 
-        fmt = "%a %d %B"
-        desc = f"Lesson [link]({BASE_LESSON + get_class_id(event)})\n"
-        desc += f"**{start:%H:%M}** to **{end:%H:%M}** on **{start.strftime(fmt)}**\n"
-        desc += f"Teacher : **{get_teacher(event)}**\n"
+        desc = ""
+        delim = "__"
+        if now >= start:
+            if now < end:
+                fmt = format_time(get_time_diff(now - start))
+                desc += f":teacher: [Started since]({lesson_link}) {fmt}\n"
+            else:
+                # if the lesson is over
+                delim = "~~"
+        else:
+            fmt = format_time(get_time_diff(start - now))
+            desc += f"⏲ [Starts]({lesson_link}) in {fmt}\n"
 
-        embed.add_field(name=f"__{str(event.name)}__",
+        desc += f"From **{start:%H:%M}** to **{end:%H:%M}** "
+        desc += f"with **{get_teacher(event)}**\n"
+
+        embed.add_field(name=f"{delim}{str(event.name)}{delim}",
                         value=desc, inline=False)
 
     await message.channel.send(embed=embed)
@@ -131,33 +145,46 @@ async def next(self, message, args):
     if not ics:
         return
 
-    now = datetime.datetime.now().replace(tzinfo=pytz.UTC)
+    now = datetime.datetime.utcnow().replace(tzinfo=pytz.UTC)
     # Should be using this but the function is overloaded Kek
     # event = next(ics.timeline.start_after(now))
     event = ics.timeline.start_after(now).__next__()
 
     start = datetime.datetime.fromisoformat(str(event.begin))
     end = datetime.datetime.fromisoformat(str(event.end))
+    lesson_link = BASE_LESSON + get_class_id(event)
 
-    fmt = "%a %d %B"
-    desc = f"Starts at **{start:%Hh%M}** and ends at **{end:%Hh%M}** on **{start.strftime(fmt)}**\n"
-    desc += f"Teacher : **{get_teacher(event)}**\n"
+    desc = ""
+    if now >= start:
+        if now < end:
+            fmt = format_time(get_time_diff(now - start))
+            desc += f":teacher: [Started since]({lesson_link}) {fmt} "
+    else:
+        fmt = format_time(get_time_diff(start - now))
+        desc += f"⏲ [Starts]({lesson_link}) in {fmt} "
+
+    fmt = "%A %d %B"
+    desc += f"on **{start.strftime(fmt)}**\n"
+    desc += f"From **{start:%H:%M}** to **{end:%H:%M}** "
+    desc += f"with **{get_teacher(event)}**\n"
 
     embed = discord.Embed(
-        title=f"Next lesson is *{event.name}*",
-        description=desc,
-        url=BASE_LESSON + get_class_id(event),
+        title=f"Next lesson",
         colour=BOT_COLOR,
-        timestamp=datetime.datetime.utcfromtimestamp(time.time()))
+        timestamp=now)
+    
+    embed.add_field(
+        name=f"__{str(event.name)}__",
+        value=desc,
+        inline=False)
 
     try:
-        name = get_teacher(event).lower()
         url = PROFESSORS[get_teacher(event).lower()]
     except:
         url = ICON
-
     embed.set_thumbnail(url=url)
     embed.set_footer(text="Momento", icon_url=ICON)
+    
     await message.channel.send(embed=embed)
 
 # Triggered when command 'mom?logs' is used
