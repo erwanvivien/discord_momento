@@ -9,7 +9,7 @@ import concurrent.futures
 
 import database as db
 from ics import Calendar
-from chronos import get_ics_feed, get_ics_week, get_class_id, get_teacher, is_today
+from chronos import get_ics_feed, get_ics_week, get_group_id, get_teacher, is_today
 from utils import PROFESSORS, get_time_diff, format_time
 
 ERRORS = []
@@ -49,22 +49,23 @@ BASE_LESSON = "https://chronos.epita.net/ade/custom/modules/plannings/eventInfo.
 def format_cmd(prefix, cmd):
     return f"mom{prefix}{cmd} {CMD_DETAILS[cmd]['usage']}"
 
-# Checks validity for a given class
-async def class_ics(message, args, week=None):
+def get_group(args, userid):
     if not args:
-        args = db.get_class(message.author.id)
-        if not args:
-            cmd = format_cmd(db.get_prefix(message.author.id), "set")
-            return await error_message(message,
-                                       "You don't have any default class set",
-                                       f"Please check the ``{cmd}`` command.")
-    else:
-        args = ' '.join(args)
+        return db.get_class(userid)
+    return ' '.join(args)
 
-    ics = get_ics_feed(args) if week == None else get_ics_week(args, week)
+# Checks validity for a given class
+async def get_group_ics(message, group, week=None):
+    if not group:
+        cmd = format_cmd(db.get_prefix(message.author.id), "set")
+        return await error_message(message,
+                                    "You don't have any default class set",
+                                    f"Please check the ``{cmd}`` command.")
+
+    ics = get_ics_feed(group) if week == None else get_ics_week(group, week)
     if not ics:
         return await error_message(message,
-                                   f"The class '{args}' does not exist",
+                                   f"The class '{group}' does not exist",
                                    "Please refer to existing iChronos classes.")
 
     return ics
@@ -79,7 +80,8 @@ async def error_message(message, title=WRONG_USAGE, desc=HELP_USAGE):
 
 # Triggered when command 'mom?' is used
 async def default(self, message, args):
-    ics = await class_ics(message, args)
+    group = get_group(args, message.author.id)
+    ics = await get_group_ics(message, group)
     if not ics:
         return
 
@@ -91,7 +93,7 @@ async def default(self, message, args):
     exists = any(events)
 
     embed = discord.Embed(
-        title="It seems you are free today!" if not exists else "Today's lessons are",
+        title="It seems you are free today!" if not exists else f"Today's {group} lessons' are",
         colour=BOT_COLOR,
         timestamp=now)
     
@@ -102,7 +104,7 @@ async def default(self, message, args):
     for event in events:
         start = datetime.datetime.fromisoformat(str(event.begin))
         end = datetime.datetime.fromisoformat(str(event.end))
-        lesson_link = BASE_LESSON + get_class_id(event)
+        lesson_link = BASE_LESSON + get_group_id(event)
 
         desc = ""
         delim = "__"
@@ -141,7 +143,8 @@ async def set(self, message, args):
 
 # Triggered when command 'mom?next [class]' is used
 async def next(self, message, args):
-    ics = await class_ics(message, args)
+    group = get_group(args, message.author.id)
+    ics = await get_group_ics(message, group)
     if not ics:
         return
 
@@ -152,7 +155,7 @@ async def next(self, message, args):
 
     start = datetime.datetime.fromisoformat(str(event.begin))
     end = datetime.datetime.fromisoformat(str(event.end))
-    lesson_link = BASE_LESSON + get_class_id(event)
+    lesson_link = BASE_LESSON + get_group_id(event)
 
     desc = ""
     if now >= start:
@@ -169,7 +172,7 @@ async def next(self, message, args):
     desc += f"with **{get_teacher(event)}**\n"
 
     embed = discord.Embed(
-        title=f"Next lesson",
+        title=f"Next lesson for {group}",
         colour=BOT_COLOR,
         timestamp=now)
     
@@ -184,7 +187,7 @@ async def next(self, message, args):
         url = ICON
     embed.set_thumbnail(url=url)
     embed.set_footer(text="Momento", icon_url=ICON)
-    
+
     await message.channel.send(embed=embed)
 
 # Triggered when command 'mom?logs' is used
@@ -238,7 +241,7 @@ async def week(self, message, args):
             week_nb = 0
             group = args
 
-    ics = await class_ics(message, group, week_nb)
+    ics = await get_group_ics(message, group, week_nb)
     if not ics:
         return
 
@@ -262,7 +265,7 @@ async def week(self, message, args):
         end = datetime.datetime.fromisoformat(str(event.end))
 
         fmt = "%a %d %B"
-        desc = f"Lesson [link]({BASE_LESSON + get_class_id(event)})\n"
+        desc = f"Lesson [link]({BASE_LESSON + get_group_id(event)})\n"
         desc += f"Starts at **{start:%Hh%M}** and ends at **{end:%Hh%M}** on **{start.strftime(fmt)}**\n"
         desc += f"Teacher : **{get_teacher(event)}**\n"
 

@@ -34,7 +34,7 @@ def get_ics_feed(group):
         return None
 
 
-def get_class_id(event):
+def get_group_id(event):
     uid = re.search("-[0-9]*@", str(event.uid))
     return uid.group()[1:-1]
 
