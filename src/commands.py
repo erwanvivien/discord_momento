@@ -49,8 +49,6 @@ def format_cmd(prefix, cmd):
     return f"mom{prefix}{cmd} {CMD_DETAILS[cmd]['usage']}"
 
 # Checks validity for a given class
-
-
 async def class_ics(message, args, week=None):
     if not args:
         args = db.get_class(message.author.id)
@@ -71,8 +69,6 @@ async def class_ics(message, args, week=None):
     return ics
 
 # Utility function to format error messages
-
-
 async def error_message(message, title=WRONG_USAGE, desc=HELP_USAGE):
     embed = discord.Embed(title=title,
                           description=desc,
@@ -81,8 +77,6 @@ async def error_message(message, title=WRONG_USAGE, desc=HELP_USAGE):
     await message.channel.send(embed=embed)
 
 # Triggered when command 'mom?' is used
-
-
 async def default(self, message, args):
     ics = await class_ics(message, args)
     if not ics:
@@ -91,13 +85,14 @@ async def default(self, message, args):
     # This is only to test (on weekends bruh)
     # now = datetime.datetime.now().replace(tzinfo=pytz.UTC)
     # events = ics.timeline.start_after(now)
-    events = ics.timeline.today()
-    exists = any(True for _ in events)
+    events = list(ics.timeline.today())
+    exists = any(events)
 
     embed = discord.Embed(
         title="It seems you are free today!" if not exists else "Today's lessons are",
         colour=BOT_COLOR,
         timestamp=datetime.datetime.utcfromtimestamp(time.time()))
+    
     if exists:
         embed.set_thumbnail(url=ICON)
         embed.set_footer(text="Momento", icon_url=ICON)
@@ -108,7 +103,7 @@ async def default(self, message, args):
 
         fmt = "%a %d %B"
         desc = f"Lesson [link]({BASE_LESSON + get_class_id(event)})\n"
-        desc += f"Starts at **{start:%Hh%M}** and ends at **{end:%Hh%M}** on **{start.strftime(fmt)}**\n"
+        desc += f"**{start:%H:%M}** to **{end:%H:%M}** on **{start.strftime(fmt)}**\n"
         desc += f"Teacher : **{get_teacher(event)}**\n"
 
         embed.add_field(name=f"__{str(event.name)}__",
@@ -117,8 +112,6 @@ async def default(self, message, args):
     await message.channel.send(embed=embed)
 
 # Triggered when command 'mom?set <class>' is used
-
-
 async def set(self, message, args):
     if not args:
         return await error_message(message)
@@ -133,8 +126,6 @@ async def set(self, message, args):
     await message.channel.send(embed=embed)
 
 # Triggered when command 'mom?next [class]' is used
-
-
 async def next(self, message, args):
     ics = await class_ics(message, args)
     if not ics:
@@ -171,8 +162,6 @@ async def next(self, message, args):
 
 # Triggered when command 'mom?logs' is used
 # Appends and shows errors that occurred during runtime
-
-
 async def logs(self, message, args):
     if not message.author.id in DEV_IDS:
         return await error_message(message, desc=ADMIN_USAGE)
@@ -197,8 +186,6 @@ async def logs(self, message, args):
 
 # Triggered when command 'mom?clear' is used
 # Deletes 'users' table from database
-
-
 async def clear(self, message, args):
     db.clear_all(message.author.id)
     embed = discord.Embed(
@@ -209,8 +196,6 @@ async def clear(self, message, args):
     await message.channel.send(embed=embed)
 
 # Triggered when command 'mom?week [class]' is used
-
-
 async def week(self, message, args):
     if not args:
         week_nb = 0
@@ -274,8 +259,6 @@ async def week(self, message, args):
 
 # Triggered when command 'mom?prefix <prefix>' is used
 # Sets 'prefix' field to the new prefix in the 'users' table
-
-
 async def prefix(self, message, args):
     if not args or len(args) != 1 or len(args[0]) > 1:
         return await error_message(message)
@@ -291,8 +274,6 @@ async def prefix(self, message, args):
     await message.channel.send(embed=embed)
 
 # Triggered when command 'mom?settings' is used
-
-
 async def settings(self, message, args):
     if args:
         return await error_message(message)
@@ -313,8 +294,6 @@ async def settings(self, message, args):
 
 # Triggered when command 'mom?report <message>' is used
 # Sends report message to a dedicated Discord channel
-
-
 async def report(self, message, args):
     if not args:
         return await error_message(message)
@@ -340,8 +319,6 @@ async def report(self, message, args):
 
 # Triggered when command 'mom?help' is used
 # Loops through each existing command printing its details
-
-
 async def help(self, message, args):
     prefix = DEFAULT_PREFIX
     embed = discord.Embed(
@@ -360,19 +337,16 @@ async def help(self, message, args):
     msg = await message.channel.send(embed=embed)
     await msg.add_reaction(emoji='❌')
 
-
 async def test(self, message, args):
     if not (message.author.id in DEV_IDS):
         return await error_message(message, desc=ADMIN_USAGE)
     await message.channel.send("Did nothing :)")
-
 
 async def fail(self, message, args):
     if not (message.author.id in DEV_IDS):
         return await error_message(message, desc=ADMIN_USAGE)
 
     mockedObj.raiseError.side_effect = Mock(side_effect=Exception('Test'))
-
 
 async def db_(self, message, args):
     if not (message.author.id in DEV_IDS):
