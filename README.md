@@ -8,19 +8,19 @@ The bot gathers ICS data (to understand iCalendar format files) from EPITA sched
 ## How to use it?
 Invite the bot on your server through [this link](https://discord.com/). Type `mom?help` to get a list of the available features. Here is an exhaustive list of all the features.
 
-- `mom?set <class>` - sets your default class (so that you don't have to specify it each time)
-- `mom?prefix <class>` - changes your ``?`` personally
-- `mom?clear` - clears user settings from database (prefix and default class)
+- `mom?set <group>` - sets your default group (so that you don't have to specify it each time)
+- `mom?prefix <group>` - changes your ``?`` personally
+- `mom?clear` - clears user settings from database (prefix and default group)
 - `mom?report <message>` - reports a bug to the devs (it has to be at least 70-characters long)
-- `mom?next [class]` - shows the very next lesson of the day
-- `mom?week [class]` - shows week's schedule
-- `mom? [class]` - shows today's schedule
+- `mom?next [group]` - shows the very next lesson of the day
+- `mom?week [group]` - shows week's schedule
+- `mom? [group]` - shows today's schedule
 - `mom?help` - shows bot help information
 
 If you feel like contacting us for other things than technical, find our mail addresses right below. Otherwise, please use the report command right above.
 
 ## Why is the bot showing wrong data?
-The data the bot stores is updated every 10 minutes. Though we could raise that rate, we prefer not as we estimate it highly sufficient for this purpose. Increasing it would burden the Chronos API and may prevent us from accessing it.
+The data the bot uses comes from iChronos website, which is only updated once a day. We are aiming to move to the official Chronos API as soon as we gather more information about how it works. We are in close contact with the people responsible for its operation. The transition will be smooth and may take some time.
 
 ## Authors
 - Hugo BOIS (*hugo.bois@epita.fr*)
