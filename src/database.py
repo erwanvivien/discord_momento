@@ -27,12 +27,12 @@ def clear_all(userid):
     exec(sql)
 
 
-def get_class(userid):
+def get_group(userid):
     sql = f'SELECT class FROM users WHERE id={userid}'
     return exec(sql)[0][0]
 
 
-def set_class(userid, group):
+def set_group(userid, group):
     sql = f"UPDATE users SET class = '{group}' WHERE id = {userid}"
     exec(sql)
 

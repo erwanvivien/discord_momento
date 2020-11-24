@@ -14,10 +14,10 @@ from utils import PROFESSORS, get_time_diff, format_time
 
 ERRORS = []
 CMD_DETAILS = {
-    '': {"desc": "Shows today's schedule", "usage": "[class]"},
-    'next': {"desc": "Shows the very next class", "usage": "[class]"},
-    'week': {"desc": "Shows week's schedule", "usage": "[class]"},
-    'set': {"desc": "Sets your default class", "usage": "<class>"},
+    '': {"desc": "Shows today's schedule", "usage": "[group]"},
+    'next': {"desc": "Shows the very next lesson", "usage": "[group]"},
+    'week': {"desc": "Shows week's schedule", "usage": "[group]"},
+    'set': {"desc": "Sets your default group", "usage": "<group>"},
     'help': {"desc": "Shows help information", "usage": ""},
     'settings': {"desc": "Shows current user settings", "usage": ""},
     'clear': {"desc": "Clears all user settings", "usage": ""},
@@ -51,22 +51,22 @@ def format_cmd(prefix, cmd):
 
 def get_group(args, userid):
     if not args:
-        return db.get_class(userid)
+        return db.get_group(userid)
     return ' '.join(args)
 
-# Checks validity for a given class
+# Checks validity for a given group
 async def get_group_ics(message, group, week=None):
     if not group:
         cmd = format_cmd(db.get_prefix(message.author.id), "set")
         return await error_message(message,
-                                    "You don't have any default class set",
+                                    "You don't have any default group set",
                                     f"Please check the ``{cmd}`` command.")
 
     ics = get_ics_feed(group) if week == None else get_ics_week(group, week)
     if not ics:
         return await error_message(message,
-                                   f"The class '{group}' does not exist",
-                                   "Please refer to existing iChronos classes.")
+                                   f"The group '{group}' does not exist",
+                                   "Please refer to existing iChronos groups.")
 
     return ics
 
@@ -127,21 +127,21 @@ async def default(self, message, args):
 
     await message.channel.send(embed=embed)
 
-# Triggered when command 'mom?set <class>' is used
+# Triggered when command 'mom?set <group>' is used
 async def set(self, message, args):
     if not args:
         return await error_message(message)
 
     args = ' '.join(args)
-    db.set_class(message.author.id, args)
+    db.set_group(message.author.id, args)
 
     embed = discord.Embed(
-        title=f"You set '{args}' as your default class",
+        title=f"You set '{args}' as your default group",
         colour=VALID_COLOR
     )
     await message.channel.send(embed=embed)
 
-# Triggered when command 'mom?next [class]' is used
+# Triggered when command 'mom?next [group]' is used
 async def next(self, message, args):
     group = get_group(args, message.author.id)
     ics = await get_group_ics(message, group)
@@ -225,18 +225,18 @@ async def clear(self, message, args):
         colour=VALID_COLOR)
     await message.channel.send(embed=embed)
 
-# Triggered when command 'mom?week [class]' is used
+# Triggered when command 'mom?week [group]' is used
 async def week(self, message, args):
     if not args:
         week_nb = 0
-        group = db.get_class(message.author.id)
+        group = db.get_group(message.author.id)
         if group:
             group = [group]
     else:
         try:
             week_nb = int(args[0])
             group = args[1:] if len(
-                args) >= 2 else [db.get_class(message.author.id)]
+                args) >= 2 else [db.get_group(message.author.id)]
         except:
             week_nb = 0
             group = args
@@ -314,7 +314,7 @@ async def settings(self, message, args):
         colour=BOT_COLOR)
 
     settings = [('prefix', f'``{settings[1]}``'),
-                ('class', f'``{settings[2]}``')]
+                ('group', f'``{settings[2]}``')]
 
     for set in settings:
         embed.add_field(name=set[0], value=set[1], inline=True)
