@@ -4,19 +4,20 @@ import datetime
 import pytz
 import logging
 import os
+import math
 import concurrent.futures
 
 import database as db
 from ics import Calendar
-from chronos import get_ics_feed, get_ics_week, get_class_id, get_teacher, is_today
-from utils import PROFESSORS
+from chronos import get_ics_feed, get_ics_week, get_group_id, get_teacher, is_today
+from utils import PROFESSORS, get_time_diff, format_time
 
 ERRORS = []
 CMD_DETAILS = {
-    '': {"desc": "Shows today's schedule", "usage": "[class]"},
-    'next': {"desc": "Shows the very next class", "usage": "[class]"},
-    'week': {"desc": "Shows week's schedule", "usage": "[class]"},
-    'set': {"desc": "Sets your default class", "usage": "<class>"},
+    '': {"desc": "Shows today's schedule", "usage": "[group]"},
+    'next': {"desc": "Shows the very next lesson", "usage": "[group]"},
+    'week': {"desc": "Shows week's schedule", "usage": "[group]"},
+    'set': {"desc": "Sets your default group", "usage": "<group>"},
     'help': {"desc": "Shows help information", "usage": ""},
     'settings': {"desc": "Shows current user settings", "usage": ""},
     'clear': {"desc": "Clears all user settings", "usage": ""},
@@ -48,31 +49,28 @@ BASE_LESSON = "https://chronos.epita.net/ade/custom/modules/plannings/eventInfo.
 def format_cmd(prefix, cmd):
     return f"mom{prefix}{cmd} {CMD_DETAILS[cmd]['usage']}"
 
-# Checks validity for a given class
-
-
-async def class_ics(message, args, week=None):
+def get_group(args, userid):
     if not args:
-        args = db.get_class(message.author.id)
-        if not args:
-            cmd = format_cmd(db.get_prefix(message.author.id), "set")
-            return await error_message(message,
-                                       "You don't have any default class set",
-                                       f"Please check the ``{cmd}`` command.")
-    else:
-        args = ' '.join(args)
+        return db.get_group(userid)
+    return ' '.join(args)
 
-    ics = get_ics_feed(args) if week == None else get_ics_week(args, week)
+# Checks validity for a given group
+async def get_group_ics(message, group, week=None):
+    if not group:
+        cmd = format_cmd(db.get_prefix(message.author.id), "set")
+        return await error_message(message,
+                                    "You don't have any default group set",
+                                    f"Please check the ``{cmd}`` command.")
+
+    ics = get_ics_feed(group) if week == None else get_ics_week(group, week)
     if not ics:
         return await error_message(message,
-                                   f"The class '{args}' does not exist",
-                                   "Please refer to existing iChronos classes.")
+                                   f"The group '{group}' does not exist",
+                                   "Please refer to existing iChronos groups.")
 
     return ics
 
 # Utility function to format error messages
-
-
 async def error_message(message, title=WRONG_USAGE, desc=HELP_USAGE):
     embed = discord.Embed(title=title,
                           description=desc,
@@ -81,23 +79,24 @@ async def error_message(message, title=WRONG_USAGE, desc=HELP_USAGE):
     await message.channel.send(embed=embed)
 
 # Triggered when command 'mom?' is used
-
-
 async def default(self, message, args):
-    ics = await class_ics(message, args)
+    group = get_group(args, message.author.id)
+    ics = await get_group_ics(message, group)
     if not ics:
         return
 
     # This is only to test (on weekends bruh)
     # now = datetime.datetime.now().replace(tzinfo=pytz.UTC)
     # events = ics.timeline.start_after(now)
-    events = ics.timeline.today()
-    exists = any(True for _ in events)
+    events = list(ics.timeline.today())
+    now = datetime.datetime.utcnow().replace(tzinfo=pytz.UTC)
+    exists = any(events)
 
     embed = discord.Embed(
-        title="It seems you are free today!" if not exists else "Today's lessons are",
+        title="It seems you are free today!" if not exists else f"Today's {group} lessons' are",
         colour=BOT_COLOR,
-        timestamp=datetime.datetime.utcfromtimestamp(time.time()))
+        timestamp=now)
+    
     if exists:
         embed.set_thumbnail(url=ICON)
         embed.set_footer(text="Momento", icon_url=ICON)
@@ -105,74 +104,94 @@ async def default(self, message, args):
     for event in events:
         start = datetime.datetime.fromisoformat(str(event.begin))
         end = datetime.datetime.fromisoformat(str(event.end))
+        lesson_link = BASE_LESSON + get_group_id(event)
 
-        fmt = "%a %d %B"
-        desc = f"Lesson [link]({BASE_LESSON + get_class_id(event)})\n"
-        desc += f"Starts at **{start:%Hh%M}** and ends at **{end:%Hh%M}** on **{start.strftime(fmt)}**\n"
-        desc += f"Teacher : **{get_teacher(event)}**\n"
+        desc = ""
+        delim = "__"
+        if now >= start:
+            if now < end:
+                fmt = format_time(get_time_diff(now - start))
+                desc += f":teacher: [Started since]({lesson_link}) {fmt}\n"
+            else:
+                # if the lesson is over
+                delim = "~~"
+        else:
+            fmt = format_time(get_time_diff(start - now))
+            desc += f"⏲ [Starts]({lesson_link}) in {fmt}\n"
 
-        embed.add_field(name=f"__{str(event.name)}__",
+        desc += f"From **{start:%H:%M}** to **{end:%H:%M}** "
+        desc += f"with **{get_teacher(event)}**\n"
+
+        embed.add_field(name=f"{delim}{str(event.name)}{delim}",
                         value=desc, inline=False)
 
     await message.channel.send(embed=embed)
 
-# Triggered when command 'mom?set <class>' is used
-
-
+# Triggered when command 'mom?set <group>' is used
 async def set(self, message, args):
     if not args:
         return await error_message(message)
 
     args = ' '.join(args)
-    db.set_class(message.author.id, args)
+    db.set_group(message.author.id, args)
 
     embed = discord.Embed(
-        title=f"You set '{args}' as your default class",
+        title=f"You set '{args}' as your default group",
         colour=VALID_COLOR
     )
     await message.channel.send(embed=embed)
 
-# Triggered when command 'mom?next [class]' is used
-
-
+# Triggered when command 'mom?next [group]' is used
 async def next(self, message, args):
-    ics = await class_ics(message, args)
+    group = get_group(args, message.author.id)
+    ics = await get_group_ics(message, group)
     if not ics:
         return
 
-    now = datetime.datetime.now().replace(tzinfo=pytz.UTC)
+    now = datetime.datetime.utcnow().replace(tzinfo=pytz.UTC)
     # Should be using this but the function is overloaded Kek
     # event = next(ics.timeline.start_after(now))
     event = ics.timeline.start_after(now).__next__()
 
     start = datetime.datetime.fromisoformat(str(event.begin))
     end = datetime.datetime.fromisoformat(str(event.end))
+    lesson_link = BASE_LESSON + get_group_id(event)
 
-    fmt = "%a %d %B"
-    desc = f"Starts at **{start:%Hh%M}** and ends at **{end:%Hh%M}** on **{start.strftime(fmt)}**\n"
-    desc += f"Teacher : **{get_teacher(event)}**\n"
+    desc = ""
+    if now >= start:
+        if now < end:
+            fmt = format_time(get_time_diff(now - start))
+            desc += f":teacher: [Started since]({lesson_link}) {fmt} "
+    else:
+        fmt = format_time(get_time_diff(start - now))
+        desc += f"⏲ [Starts]({lesson_link}) in {fmt} "
+
+    fmt = "%A %d %B"
+    desc += f"on **{start.strftime(fmt)}**\n"
+    desc += f"From **{start:%H:%M}** to **{end:%H:%M}** "
+    desc += f"with **{get_teacher(event)}**\n"
 
     embed = discord.Embed(
-        title=f"Next lesson is *{event.name}*",
-        description=desc,
-        url=BASE_LESSON + get_class_id(event),
+        title=f"Next lesson for {group}",
         colour=BOT_COLOR,
-        timestamp=datetime.datetime.utcfromtimestamp(time.time()))
+        timestamp=now)
+    
+    embed.add_field(
+        name=f"__{str(event.name)}__",
+        value=desc,
+        inline=False)
 
     try:
-        name = get_teacher(event).lower()
         url = PROFESSORS[get_teacher(event).lower()]
     except:
         url = ICON
-
     embed.set_thumbnail(url=url)
     embed.set_footer(text="Momento", icon_url=ICON)
+
     await message.channel.send(embed=embed)
 
 # Triggered when command 'mom?logs' is used
 # Appends and shows errors that occurred during runtime
-
-
 async def logs(self, message, args):
     if not message.author.id in DEV_IDS:
         return await error_message(message, desc=ADMIN_USAGE)
@@ -197,8 +216,6 @@ async def logs(self, message, args):
 
 # Triggered when command 'mom?clear' is used
 # Deletes 'users' table from database
-
-
 async def clear(self, message, args):
     db.clear_all(message.author.id)
     embed = discord.Embed(
@@ -208,25 +225,23 @@ async def clear(self, message, args):
         colour=VALID_COLOR)
     await message.channel.send(embed=embed)
 
-# Triggered when command 'mom?week [class]' is used
-
-
+# Triggered when command 'mom?week [group]' is used
 async def week(self, message, args):
     if not args:
         week_nb = 0
-        group = db.get_class(message.author.id)
+        group = db.get_group(message.author.id)
         if group:
             group = [group]
     else:
         try:
             week_nb = int(args[0])
             group = args[1:] if len(
-                args) >= 2 else [db.get_class(message.author.id)]
+                args) >= 2 else [db.get_group(message.author.id)]
         except:
             week_nb = 0
             group = args
 
-    ics = await class_ics(message, group, week_nb)
+    ics = await get_group_ics(message, group, week_nb)
     if not ics:
         return
 
@@ -250,7 +265,7 @@ async def week(self, message, args):
         end = datetime.datetime.fromisoformat(str(event.end))
 
         fmt = "%a %d %B"
-        desc = f"Lesson [link]({BASE_LESSON + get_class_id(event)})\n"
+        desc = f"Lesson [link]({BASE_LESSON + get_group_id(event)})\n"
         desc += f"Starts at **{start:%Hh%M}** and ends at **{end:%Hh%M}** on **{start.strftime(fmt)}**\n"
         desc += f"Teacher : **{get_teacher(event)}**\n"
 
@@ -274,8 +289,6 @@ async def week(self, message, args):
 
 # Triggered when command 'mom?prefix <prefix>' is used
 # Sets 'prefix' field to the new prefix in the 'users' table
-
-
 async def prefix(self, message, args):
     if not args or len(args) != 1 or len(args[0]) > 1:
         return await error_message(message)
@@ -291,8 +304,6 @@ async def prefix(self, message, args):
     await message.channel.send(embed=embed)
 
 # Triggered when command 'mom?settings' is used
-
-
 async def settings(self, message, args):
     if args:
         return await error_message(message)
@@ -303,7 +314,7 @@ async def settings(self, message, args):
         colour=BOT_COLOR)
 
     settings = [('prefix', f'``{settings[1]}``'),
-                ('class', f'``{settings[2]}``')]
+                ('group', f'``{settings[2]}``')]
 
     for set in settings:
         embed.add_field(name=set[0], value=set[1], inline=True)
@@ -313,8 +324,6 @@ async def settings(self, message, args):
 
 # Triggered when command 'mom?report <message>' is used
 # Sends report message to a dedicated Discord channel
-
-
 async def report(self, message, args):
     if not args:
         return await error_message(message)
@@ -340,8 +349,6 @@ async def report(self, message, args):
 
 # Triggered when command 'mom?help' is used
 # Loops through each existing command printing its details
-
-
 async def help(self, message, args):
     prefix = DEFAULT_PREFIX
     embed = discord.Embed(
@@ -360,19 +367,16 @@ async def help(self, message, args):
     msg = await message.channel.send(embed=embed)
     await msg.add_reaction(emoji='❌')
 
-
 async def test(self, message, args):
     if not (message.author.id in DEV_IDS):
         return await error_message(message, desc=ADMIN_USAGE)
     await message.channel.send("Did nothing :)")
-
 
 async def fail(self, message, args):
     if not (message.author.id in DEV_IDS):
         return await error_message(message, desc=ADMIN_USAGE)
 
     mockedObj.raiseError.side_effect = Mock(side_effect=Exception('Test'))
-
 
 async def db_(self, message, args):
     if not (message.author.id in DEV_IDS):
