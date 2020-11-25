@@ -2,6 +2,10 @@ import datetime
 from ics import Calendar
 import requests
 import re
+from utils import get_content
+
+# token_chronos = get_content("token_chronos")
+# API = 'https://v2ssl.webservices.chronos.epita.net/'
 
 
 def week_nb(off=0):

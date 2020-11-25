@@ -1,12 +1,21 @@
 import math
 
+
 def get_content(file):
     file = open(file, "r")
     return file.read()
 
 
 def author_name(author):
-    return author.name if not author.nick else author.nick
+    name = None
+    try:
+        name = author.nick
+    except:
+        name = author.name
+
+    if not name:
+        return author.name
+    return name
 
 
 # Utility function taking a datetime and converting it to a tuple
@@ -16,11 +25,13 @@ def get_time_diff(diff):
     hours = math.floor(total_seconds / 3600)
     minutes = (total_seconds - hours * 3600) / 60
     seconds = (minutes % 1) * 60
-    
+
     return (hours, math.floor(minutes), math.floor(seconds))
 
 # Utility function called given get_time_diff() function argument
 # time[0] for hours, time[1] for minutes, and time[2] for seconds
+
+
 def format_time(time):
     str = ""
     if time[0] > 0:
@@ -67,6 +78,3 @@ PROFESSORS['inconnu'] = 'https://i.pinimg.com/originals/ed/bf/ad/edbfad6bf79e808
 PROFESSORS['acu'] = BASE_URL + 'theophane.vie'
 PROFESSORS['dudin bashar'] = BASE_URL + 'dudin_b'
 PROFESSORS['laskar gabriel'] = BASE_URL + 'laskar_g'
-
-# for (k, v) in PROFESSORS.items():
-#     print(str(k) + ': ' + str(v))

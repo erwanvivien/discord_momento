@@ -50,7 +50,7 @@ class Client(discord.Client):
         args = split[1].split(' ') if len(split) > 1 else None
 
         # Retrieve user from database and create if non-existing
-        user = db.exists(message.author.id)
+        user = db.user_exists(message.author.id)
         if not user:
             db.adduser(message.author.id)
         prefix = db.get_prefix(message.author.id)

@@ -52,7 +52,7 @@ def get_prefix(userid):
     return exec(sql)[0][0]
 
 
-def exists(userid):
+def user_exists(userid):
     sql = f'''SELECT * FROM users ORDER BY id'''
     db = exec(sql)
 
