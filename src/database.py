@@ -2,7 +2,7 @@ import sqlite3
 from commands import DEFAULT_PREFIX
 from sqlite3 import Error
 
-DB_PATH = "database.db"
+DB_PATH = "db/database.db"
 
 
 def create():
@@ -64,7 +64,7 @@ def user_exists(userid):
 
 
 def exec(sql, args=None):
-    conn = sqlite3.connect('database.db')
+    conn = sqlite3.connect(DB_PATH)
     cur = conn.cursor()
 
     if args:
