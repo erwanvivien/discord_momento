@@ -8,4 +8,4 @@ fi
 
 sudo docker image rm --force momento
 sudo docker build -t momento .
-sudo docker run -d -v db:/app/db momento
+sudo docker run -d -v db_momento:/app/db momento
